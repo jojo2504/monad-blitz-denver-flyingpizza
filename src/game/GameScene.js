@@ -12,6 +12,7 @@ export class GameScene extends Phaser.Scene {
         this.jumpsRemaining = 3;  // Start with 3 jumps
         this.hasPowerUp = false;
         this.powerUpEndTime = 0;
+        this.heavyDebuffEndTime = 0;
         this.platformTimer = 0;
         this.powerUpTimer = 0;
         this.clouds = [];
@@ -43,8 +44,8 @@ export class GameScene extends Phaser.Scene {
         this.player = this.physics.add.sprite(150, 300, 'player');
         this.player.setBounce(0);
         this.player.setCollideWorldBounds(false);
-        // Start with very low gravity for easier gameplay
-        this.player.body.setGravityY(200); // Very low gravity at start
+        // Start with low gravity for a short tutorial window
+        this.player.body.setGravityY(250);
         
         // Collisions
         this.physics.add.collider(this.player, this.platforms, () => {
@@ -97,9 +98,9 @@ export class GameScene extends Phaser.Scene {
         // Tutorial period: easier gravity for first 5 seconds AFTER first jump
         if (this.gameStartTime !== null) {
             const elapsedTime = Date.now() - this.gameStartTime;
-            if (elapsedTime > 5000 && this.player.body.gravity.y === 200) {
+            if (elapsedTime > 5000 && this.player.body.gravity.y <= 250) {
                 // Transition to normal gravity after 5 seconds
-                this.player.body.setGravityY(500);  // Reduced from 800 to 500
+                this.player.body.setGravityY(900);
                 console.log('⚡ Gravity increased! Tutorial period over.');
                 
                 // Show message to player
@@ -177,16 +178,18 @@ export class GameScene extends Phaser.Scene {
             }
         });
         
-        // Platform spawning disabled - only 5 initial platforms
-        // this.platformTimer += delta;
-        // if (this.platformTimer > 800) {
-        //     this.spawnPlatform();
-        //     this.platformTimer = 0;
-        // }
+        // Spawn platforms to force landings (harder over time)
+        this.platformTimer += delta;
+        const platformInterval = Math.max(650, 1100 - Math.floor(this.score * 1.2)); // speeds up as score rises
+        if (this.platformTimer > platformInterval) {
+            this.spawnPlatform();
+            this.platformTimer = 0;
+        }
         
-        // Spawn power-ups - INCREASED FREQUENCY
+        // Spawn power-ups - less frequent, more punishing mix
         this.powerUpTimer += delta;
-        if (this.powerUpTimer > 600) {  // Changed from 1200 to 600 (spawn even faster)
+        const powerUpInterval = Math.max(900, 1500 - Math.floor(this.score * 0.8));
+        if (this.powerUpTimer > powerUpInterval) {
             this.spawnPowerUp();
             this.powerUpTimer = 0;
         }
@@ -216,16 +219,24 @@ export class GameScene extends Phaser.Scene {
             app.updateHeight(Math.floor(this.score));
         }
         
-        // Check power-up expiration
-        if (this.hasPowerUp && Date.now() > this.powerUpEndTime) {
-            this.hasPowerUp = false;
-            this.gameSpeed = 300;
-            this.player.clearTint();
+        // Debuff expiration (pineapple)
+        if (this.heavyDebuffEndTime && Date.now() > this.heavyDebuffEndTime) {
+            this.heavyDebuffEndTime = 0;
+            // restore baseline jump/gravity (difficulty logic below can still increase it)
+            this.jumpPower = -400;
+            if (this.player?.body?.gravity?.y < 900) this.player.body.setGravityY(900);
+            if (this.player.tintTopLeft) this.player.clearTint();
         }
         
         // Gradually increase difficulty
-        if (this.score > 100 && this.gameSpeed < 400) {
-            this.gameSpeed = 300 + (this.score / 10);
+        if (this.score > 50) {
+            // Speed ramps up faster; holding 60s should be hard
+            this.gameSpeed = Math.min(620, 300 + (this.score / 4.5));
+            // Gravity ramps up too (unless debuffed even higher)
+            const targetGravity = Math.min(1500, 900 + (this.score * 2.2));
+            if (this.player?.body?.gravity?.y < targetGravity && Date.now() > this.heavyDebuffEndTime) {
+                this.player.body.setGravityY(targetGravity);
+            }
         }
     }
     
@@ -421,33 +432,41 @@ export class GameScene extends Phaser.Scene {
     spawnPlatform() {
         const x = 850;
         
-        // Spawn 1-2 platforms at different heights for variety
-        const numPlatforms = Math.random() > 0.6 ? 2 : 1;
+        // Harder: often only 1 platform, sometimes none (gap)
+        const gapChance = Math.min(0.35, 0.10 + (this.score / 800)); // increases over time
+        if (Math.random() < gapChance) {
+            return;
+        }
+        
+        const numPlatforms = Math.random() > 0.85 ? 2 : 1;
         
         for (let i = 0; i < numPlatforms; i++) {
-            const y = Phaser.Math.Between(300, 500);
+            const y = Phaser.Math.Between(320, 520);
             const platform = this.platforms.create(x + (i * 200), y, 'platform');
-            platform.setScale(1).refreshBody();
+            // Shrink platforms as difficulty increases
+            const scale = Math.max(0.55, 1 - (this.score / 900));
+            platform.setScale(scale, 1).refreshBody();
         }
     }
     
     spawnPowerUp() {
         const x = 850;
         
-        // 50% chance to spawn a cluster of power-ups (increased from 30%)
-        const isCluster = Math.random() > 0.5;
-        const numPowerUps = isCluster ? Phaser.Math.Between(2, 4) : 1;
+        // Rare clusters
+        const isCluster = Math.random() > 0.9;
+        const numPowerUps = isCluster ? Phaser.Math.Between(2, 3) : 1;
         
         for (let i = 0; i < numPowerUps; i++) {
             const y = Phaser.Math.Between(200, 450);
             
-            // 70% chance for pepperoni (good), 30% for pineapple (bad)
-            const isPepperoni = Math.random() > 0.3;
+            // Make it harder: more pineapple over time
+            const pineappleChance = Math.min(0.75, 0.45 + (this.score / 700));
+            const isPepperoni = Math.random() > pineappleChance;
             const texture = isPepperoni ? 'pepperoni' : 'ananas';
             
             const powerUp = this.powerUps.create(x + (i * 80), y, texture);
             powerUp.setData('type', isPepperoni ? 'boost' : 'glue');
-            powerUp.setData('points', isPepperoni ? 10 : -5);
+            powerUp.setData('points', isPepperoni ? 6 : -12);
             
             // Add floating animation
             this.tweens.add({
@@ -471,19 +490,18 @@ export class GameScene extends Phaser.Scene {
         // Add points to score
         this.score += points;
         
-        // ALL orbs give 2 jumps
-        const previousJumps = this.jumpsRemaining;
-        this.jumpsRemaining = Math.min(this.jumpsRemaining + 2, 3); // Add 2 jumps, max 3
-        
-        console.log(`⬆️ Jumps restored! ${previousJumps} -> ${this.jumpsRemaining}`);
-        
         // Visual feedback based on type
         if (type === 'boost') {
+            // Pepperoni: small help (not too strong)
+            const previousJumps = this.jumpsRemaining;
+            this.jumpsRemaining = Math.min(this.jumpsRemaining + 1, 3);
+            console.log(`⬆️ Jump +1: ${previousJumps} -> ${this.jumpsRemaining}`);
+
             // Pepperoni Pizza - green glow
             player.setTint(0x00FF00);
             
             // Show jump restore popup
-            const jumpText = this.add.text(powerUp.x, powerUp.y, '+2 Jumps!', {
+            const jumpText = this.add.text(powerUp.x, powerUp.y, '+1 Jump!', {
                 fontSize: '24px',
                 fontStyle: 'bold',
                 color: '#00FF00'
@@ -503,14 +521,23 @@ export class GameScene extends Phaser.Scene {
             
             console.log('🍕 Pepperoni Pizza! +10 points, +2 jumps!');
         } else if (type === 'glue') {
-            // Pineapple Pizza - red tint (still gives jumps but costs points)
+            // Pineapple Pizza (malus): drain jumps + heavy gravity for a short time
             player.setTint(0xFF0000);
+
+            // Drain jumps
+            this.jumpsRemaining = 0;
+
+            // Apply heavy debuff
+            this.heavyDebuffEndTime = Date.now() + 2500;
+            this.jumpPower = -320;
+            if (this.player?.body) {
+                this.player.body.setGravityY(1700);
+            }
             
-            // Show jump restore popup
-            const jumpText = this.add.text(powerUp.x, powerUp.y, '+2 Jumps!', {
+            const jumpText = this.add.text(powerUp.x, powerUp.y, 'SLOWED! NO JUMPS!', {
                 fontSize: '24px',
                 fontStyle: 'bold',
-                color: '#FFFF00'
+                color: '#FF4444'
             });
             this.tweens.add({
                 targets: jumpText,

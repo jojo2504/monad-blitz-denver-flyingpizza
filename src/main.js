@@ -52,11 +52,13 @@ class PizzaSkyRaceApp {
         if (import.meta.env.VITE_WEBSOCKET_URL && import.meta.env.PROD) {
             wsUrl = import.meta.env.VITE_WEBSOCKET_URL;
         } else {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const port = window.location.port ? `:${window.location.port}` : '';
-            wsUrl = `${protocol}//${window.location.hostname}${port}`;
+            // Local dev: frontend (3000) and server (3001) are different ports
+            wsUrl = `ws://${window.location.hostname}:${SERVER_PORT}`;
         }
         this.socket = io(wsUrl);
+
+        // IMPORTANT: without this, timer/leaderboard events won't be handled
+        this.setupSocketListeners();
         
         this.setupUI();
         
@@ -83,6 +85,16 @@ class PizzaSkyRaceApp {
         this.socket.on('manualRaceStart', (data) => {
             console.log('🏁 Manual race start triggered!');
             this.currentRaceId = data.raceId;
+            this.startGame();
+        });
+
+        // If a player joins an already-running race, they won't receive raceStarted,
+        // so we use joinedRace to set raceId + start the game loop (timer updates).
+        this.socket.on('joinedRace', (data) => {
+            if (!this.currentRaceId) {
+                this.currentRaceId = data.raceId;
+            }
+            this.updateStatus(`Joined race #${data.raceId} (${data.playerCount} players)`);
             this.startGame();
         });
         
