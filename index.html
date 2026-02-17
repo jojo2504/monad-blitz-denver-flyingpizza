@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🍕 Pizza Sky Race - Monad Blitz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -13,12 +15,62 @@
         }
         
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #ec4899 0%, #9333ea 40%, #eab308 100%);
             color: white;
-            overflow: hidden;
-            touch-action: manipulation;
+            overflow-x: hidden;
+            overflow-y: auto;
+            touch-action: pan-y;
+            position: relative;
+            min-height: 100vh;
         }
+
+        /* Grid pattern overlay */
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 0;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.15) 50px, rgba(255,255,255,0.15) 51px),
+                repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(255,255,255,0.15) 50px, rgba(255,255,255,0.15) 51px);
+        }
+
+        /* Floating pizzas */
+        .floating-pizza {
+            position: fixed;
+            font-size: 28px;
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 0;
+            animation: floatDown linear infinite;
+        }
+        @keyframes floatDown {
+            0% { transform: translateY(-80px) rotate(0deg); }
+            100% { transform: translateY(110vh) rotate(360deg); }
+        }
+
+        /* Rotating corner pizzas */
+        .corner-pizza {
+            position: fixed;
+            font-size: 60px;
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .corner-pizza.top-left {
+            top: 20px;
+            left: 20px;
+            animation: spinCW 20s linear infinite;
+        }
+        .corner-pizza.bottom-right {
+            bottom: 20px;
+            right: 20px;
+            animation: spinCCW 20s linear infinite;
+        }
+        @keyframes spinCW { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes spinCCW { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
         
         #game-container {
             display: flex;
@@ -49,10 +101,12 @@
             left: 10px;
             z-index: 10;
             background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
             padding: 10px;
-            border-radius: 10px;
+            border-radius: 20px;
             max-width: 250px;
             font-size: 14px;
+            border: 2px solid rgba(255,255,255,0.15);
         }
         
         @media (max-width: 768px) {
@@ -65,8 +119,8 @@
         
         #timer {
             font-size: 48px;
-            font-weight: bold;
-            color: #FFD700;
+            font-weight: 900;
+            color: #facc15;
             text-align: center;
             margin-bottom: 10px;
         }
@@ -86,7 +140,7 @@
             padding: 5px;
             margin: 5px 0;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
+            border-radius: 10px;
             font-size: 14px;
         }
         
@@ -104,64 +158,189 @@
             }
             
             .btn {
-                padding: 10px 20px;
+                padding: 12px 24px;
                 font-size: 16px;
             }
         }
         
         .btn {
-            background: #FFD700;
-            color: #000;
-            border: none;
-            padding: 15px 30px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 10px;
+            background: white;
+            color: #030213;
+            border: 6px solid black;
+            padding: 18px 48px;
+            font-size: 22px;
+            font-weight: 900;
+            border-radius: 9999px;
             cursor: pointer;
-            margin: 5px;
-            transition: transform 0.1s;
+            margin: 10px 5px;
+            transition: all 0.2s ease;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .btn:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 16px 50px rgba(0, 0, 0, 0.4);
         }
         
         .btn:active {
-            transform: scale(0.95);
+            transform: translateY(2px) scale(0.98);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
         
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
+
+        .btn-glow {
+            position: relative;
+        }
+        .btn-glow::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            background: linear-gradient(90deg, #ec4899, #9333ea, #eab308);
+            border-radius: 9999px;
+            filter: blur(18px);
+            opacity: 0.6;
+            z-index: -1;
+            transition: opacity 0.3s;
+        }
+        .btn-glow:hover::before {
+            opacity: 1;
+        }
         
         #login-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
+            position: relative;
             width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
-            z-index: 100;
+            z-index: 1;
+            padding: 40px 20px 80px 20px;
+            overflow-y: visible;
         }
         
-        #login-screen h1 {
-            font-size: 48px;
-            margin-bottom: 20px;
+        .pizza-title {
+            font-size: 96px;
+            margin-bottom: 0;
+            color: white;
+            -webkit-text-stroke: 3px black;
+            text-shadow: 
+                4px 4px 0px rgba(255, 0, 255, 0.5),
+                8px 8px 0px rgba(0, 255, 255, 0.5);
+            font-weight: 900;
+            letter-spacing: 6px;
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            line-height: 1.1;
+            font-family: 'Inter', sans-serif;
+            animation: titleWiggle 2s ease-in-out infinite;
         }
-        
-        #login-screen p {
-            font-size: 20px;
-            margin-bottom: 30px;
+        @keyframes titleWiggle {
+            0%, 100% { transform: rotate(-1deg) scale(1); }
+            50% { transform: rotate(1deg) scale(1.02); }
+        }
+
+        .subtitle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 10px;
+            margin-bottom: 24px;
+            animation: subtitlePulse 1.5s ease-in-out infinite;
+        }
+        @keyframes subtitlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        .subtitle span {
+            font-size: 28px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: white;
+        }
+        .subtitle .star {
+            color: #facc15;
+            font-size: 28px;
+        }
+
+        /* Info cards - like the reference project's stats */
+        .info-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 28px 36px;
+            border: 6px solid black;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            color: #030213;
             text-align: center;
             max-width: 600px;
+            width: 90%;
+            margin: 12px 0;
+        }
+        .info-card h3 {
+            font-size: 24px;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .info-card p {
+            font-size: 16px;
+            font-weight: 500;
+            color: #555;
+            line-height: 1.5;
+        }
+        .info-card .big-icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+        
+        .scan-label {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            color: #030213;
+            padding: 16px 32px;
+            font-size: 20px;
+            font-weight: 900;
+            text-align: center;
+            border-radius: 24px;
+            border: 6px solid black;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 24px;
+        }
+
+        #login-screen p {
+            font-size: 18px;
+            margin-bottom: 12px;
+            text-align: center;
+            max-width: 700px;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
         }
         
         #qr-code {
             margin: 20px 0;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 24px;
+            border-radius: 24px;
+            border: 6px solid black;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
         }
         
         .hidden {
@@ -178,18 +357,216 @@
             margin-top: 10px;
             padding: 10px;
             background: rgba(255, 215, 0, 0.2);
-            border-radius: 5px;
+            border-radius: 12px;
             font-size: 14px;
+        }
+
+        .or-divider {
+            margin: 24px 0;
+            font-size: 24px;
+            font-weight: 900;
+            color: white;
+            -webkit-text-stroke: 1px black;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+            letter-spacing: 6px;
+        }
+
+        /* Stats row like the reference project */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            max-width: 700px;
+            width: 90%;
+            margin: 24px 0;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 20px 12px;
+            border: 6px solid black;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        .stat-card .stat-value {
+            font-size: 32px;
+            font-weight: 900;
+            line-height: 1.2;
+        }
+        .stat-card .stat-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #555;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+        .stat-pink { color: #ec4899; }
+        .stat-purple { color: #9333ea; }
+        .stat-yellow { color: #ca8a04; }
+
+        /* Footer badge */
+        .footer-badge {
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            padding: 14px 28px;
+            border-radius: 9999px;
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            margin-top: 28px;
+            margin-bottom: 20px;
+        }
+        .footer-badge p {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: white;
+            margin: 4px 0;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .pizza-title {
+                font-size: 56px;
+                -webkit-text-stroke: 2px black;
+                letter-spacing: 3px;
+            }
+            
+            .subtitle span {
+                font-size: 20px;
+                letter-spacing: 2px;
+            }
+            
+            .info-card {
+                padding: 20px 24px;
+                border-width: 4px;
+            }
+            .info-card h3 { font-size: 18px; }
+            .info-card p { font-size: 14px; }
+            
+            #qr-code {
+                padding: 16px;
+                border-width: 4px;
+            }
+            
+            .btn {
+                font-size: 16px;
+                padding: 14px 28px;
+                border-width: 4px;
+            }
+            
+            .scan-label {
+                font-size: 16px;
+                padding: 12px 20px;
+                border-width: 4px;
+            }
+
+            .stats-row {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+            .stat-card {
+                padding: 14px 8px;
+                border-width: 4px;
+                border-radius: 16px;
+            }
+            .stat-card .stat-value { font-size: 22px; }
+            .stat-card .stat-label { font-size: 10px; }
+
+            .corner-pizza { font-size: 40px; }
+        }
+        
+        @media (max-width: 480px) {
+            .pizza-title {
+                font-size: 42px;
+                letter-spacing: 2px;
+            }
+            
+            .subtitle span { font-size: 16px; }
+
+            .stats-row { gap: 6px; }
+            .stat-card .stat-value { font-size: 18px; }
         }
     </style>
 </head>
 <body>
+    <!-- Grid Overlay -->
+    <div class="grid-overlay"></div>
+
+    <!-- Floating Pizzas Background -->
+    <div class="floating-pizza" style="left: 5%; animation-duration: 14s; animation-delay: 0s;">🍕</div>
+    <div class="floating-pizza" style="left: 15%; animation-duration: 18s; animation-delay: 2s;">🍕</div>
+    <div class="floating-pizza" style="left: 25%; animation-duration: 12s; animation-delay: 4s;">🍕</div>
+    <div class="floating-pizza" style="left: 38%; animation-duration: 16s; animation-delay: 1s;">🍕</div>
+    <div class="floating-pizza" style="left: 50%; animation-duration: 20s; animation-delay: 3s;">🍕</div>
+    <div class="floating-pizza" style="left: 62%; animation-duration: 13s; animation-delay: 5s;">🍕</div>
+    <div class="floating-pizza" style="left: 75%; animation-duration: 17s; animation-delay: 0.5s;">🍕</div>
+    <div class="floating-pizza" style="left: 85%; animation-duration: 15s; animation-delay: 2.5s;">🍕</div>
+    <div class="floating-pizza" style="left: 92%; animation-duration: 19s; animation-delay: 4.5s;">🍕</div>
+    <div class="floating-pizza" style="left: 45%; animation-duration: 11s; animation-delay: 1.5s;">🍕</div>
+
+    <!-- Corner Rotating Pizzas -->
+    <div class="corner-pizza top-left">🍕</div>
+    <div class="corner-pizza bottom-right">🍕</div>
+
     <div id="login-screen">
-        <h1>🍕 Pizza Sky Race</h1>
-        <p>Scan the QR code or tap the button to join the race!</p>
+        <!-- Main Title -->
+        <div class="pizza-title">PIZZA</div>
+        <div class="pizza-title" style="font-size: 72px; margin-top: -4px;">SKY RACE</div>
+        
+        <!-- Subtitle with stars -->
+        <div class="subtitle">
+            <span class="star">★</span>
+            <span>Global Edition</span>
+            <span class="star">★</span>
+        </div>
+
+        <!-- Description Card -->
+        <div class="info-card">
+            <div class="big-icon">🍕</div>
+            <h3>Course verticale épique</h3>
+            <p>Vole à travers le ciel, collecte des power-ups et gagne des NFTs sur la blockchain Monad!</p>
+        </div>
+
+        <!-- Stats row -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value stat-pink">∞</div>
+                <div class="stat-label">Pizzas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value stat-purple">24/7</div>
+                <div class="stat-label">Party Time</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value stat-yellow">0 Gas</div>
+                <div class="stat-label">Frais</div>
+            </div>
+        </div>
+        
+        <!-- Scan Label -->
+        <div class="scan-label">
+            📱 Scan le QR code avec ton téléphone
+        </div>
+        
+        <!-- QR Code -->
         <div id="qr-code"></div>
-        <button class="btn" id="join-btn">Join Race with Passkey</button>
-        <p style="font-size: 14px; margin-top: 20px;">⚡ Powered by Monad & ERC-4337</p>
+        
+        <!-- Or divider -->
+        <div class="or-divider">— OU —</div>
+        
+        <!-- Join Button -->
+        <button class="btn btn-glow" id="join-btn">
+            🚀 Rejoindre la course
+        </button>
+        
+        <!-- Footer Badge -->
+        <div class="footer-badge">
+            <p>🍕 Propulsé par Monad & ERC-4337 🍕</p>
+            <p style="font-size: 12px; opacity: 0.8;">🔐 Passkey · 💸 Gasless · ⚡ Instant</p>
+        </div>
     </div>
     
     <div id="game-container" class="hidden">
