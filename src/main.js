@@ -12,9 +12,13 @@ const SERVER_PORT = 3001;
 // Game Configuration
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
-    parent: 'phaser-game',
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: 800,
+        height: 600,
+        parent: 'phaser-game'
+    },
     physics: {
         default: 'arcade',
         arcade: {
@@ -63,6 +67,7 @@ class PizzaSkyRaceApp {
     setupSocketListeners() {
         this.socket.on('connect', () => {
             console.log('✅ WebSocket connected - ID:', this.socket.id);
+            this.updateAdminDashboard();
         });
         
         this.socket.on('disconnect', () => {
@@ -75,9 +80,20 @@ class PizzaSkyRaceApp {
             this.startGame();
         });
         
+        this.socket.on('manualRaceStart', (data) => {
+            console.log('🏁 Manual race start triggered!');
+            this.currentRaceId = data.raceId;
+            this.startGame();
+        });
+        
         this.socket.on('playerJoined', (data) => {
             console.log('Player joined:', data);
             this.updateStatus(`${data.playerCount} players in race`);
+            this.updateAdminDashboard();
+        });
+        
+        this.socket.on('playerLeft', (data) => {
+            this.updateAdminDashboard();
         });
         
         this.socket.on('heightUpdate', (data) => {
@@ -92,14 +108,22 @@ class PizzaSkyRaceApp {
             this.timeRemaining = data.timeRemaining;
             this.updateTimer(this.timeRemaining);
         });
+        
+        this.socket.on('lobbyUpdate', (data) => {
+            this.updateAdminLobby(data);
+        });
     }
     
     setupUI() {
         const joinBtn = document.getElementById('join-btn');
         const jumpBtn = document.getElementById('jump-btn');
+        const startRaceBtn = document.getElementById('start-race-btn');
         
         joinBtn.addEventListener('click', () => this.joinRace());
         jumpBtn.addEventListener('click', () => this.jump());
+        
+        // Admin start race button
+        startRaceBtn.addEventListener('click', () => this.manualStartRace());
         
         // Mobile controls
         if ('ontouchstart' in window) {
@@ -303,6 +327,47 @@ class PizzaSkyRaceApp {
                 window.location.reload();
             }
         }, 5000);
+    }
+    
+    manualStartRace() {
+        if (!this.socket) {
+            alert('Not connected to server!');
+            return;
+        }
+        
+        console.log('🎮 Admin manually starting race...');
+        this.socket.emit('adminStartRace');
+    }
+    
+    updateAdminDashboard() {
+        if (this.socket) {
+            this.socket.emit('getGameState');
+        }
+    }
+    
+    updateAdminLobby(data) {
+        const playerCountElem = document.getElementById('admin-player-count');
+        const statusElem = document.getElementById('admin-status');
+        const playerListElem = document.getElementById('admin-player-list');
+        
+        if (playerCountElem) {
+            playerCountElem.textContent = data.playerCount || 0;
+        }
+        
+        if (statusElem) {
+            statusElem.textContent = data.raceActive ? 'Racing' : 'Waiting';
+            statusElem.style.color = data.raceActive ? '#00FF00' : '#FFFF00';
+        }
+        
+        if (playerListElem && data.players) {
+            playerListElem.innerHTML = '';
+            data.players.forEach(player => {
+                const div = document.createElement('div');
+                div.className = 'player-item';
+                div.textContent = `${player.slice(0, 8)}...`;
+                playerListElem.appendChild(div);
+            });
+        }
     }
 }
 

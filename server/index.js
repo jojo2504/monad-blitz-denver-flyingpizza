@@ -166,6 +166,13 @@ io.on('connection', (socket) => {
             playerCount: currentRace.players.size
         });
         
+        // Broadcast lobby update to all clients
+        io.emit('lobbyUpdate', {
+            playerCount: currentRace.players.size,
+            raceActive: currentRace.isActive,
+            players: Array.from(currentRace.players.keys())
+        });
+        
         console.log(`Player ${playerId} joined race ${currentRace.raceId}`);
     });
     
@@ -201,6 +208,41 @@ io.on('connection', (socket) => {
         }
     });
     
+    // Admin: Manually start race
+    socket.on('adminStartRace', () => {
+        console.log('🎮 Admin manually starting race...');
+        
+        let currentRace = gameState.races.get(gameState.currentRaceId);
+        
+        if (!currentRace || !currentRace.isActive || currentRace.players.size === 0) {
+            // Create new race if none exists
+            gameState.currentRaceId++;
+            currentRace = new Race(gameState.currentRaceId);
+            gameState.races.set(gameState.currentRaceId, currentRace);
+            console.log(`Started new race: ${gameState.currentRaceId}`);
+        }
+        
+        // Broadcast manual race start to all players in the race
+        io.to(`race-${currentRace.raceId}`).emit('manualRaceStart', {
+            raceId: currentRace.raceId,
+            startTime: currentRace.startTime
+        });
+        
+        console.log(`✅ Race ${currentRace.raceId} manually started with ${currentRace.players.size} players`);
+    });
+    
+    // Get current game state for admin dashboard
+    socket.on('getGameState', () => {
+        const currentRace = gameState.races.get(gameState.currentRaceId);
+        const players = currentRace ? Array.from(currentRace.players.keys()) : [];
+        
+        socket.emit('lobbyUpdate', {
+            playerCount: players.length,
+            raceActive: currentRace?.isActive || false,
+            players: players
+        });
+    });
+    
     // Disconnect
     socket.on('disconnect', () => {
         const playerData = gameState.players.get(socket.id);
@@ -214,6 +256,13 @@ io.on('connection', (socket) => {
                 io.to(`race-${playerData.raceId}`).emit('playerLeft', {
                     playerId: playerData.playerId,
                     playerCount: race.players.size
+                });
+                
+                // Broadcast updated lobby
+                io.emit('lobbyUpdate', {
+                    playerCount: race.players.size,
+                    raceActive: race.isActive,
+                    players: Array.from(race.players.keys())
                 });
             }
             
