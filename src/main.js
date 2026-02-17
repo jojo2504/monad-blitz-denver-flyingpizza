@@ -7,7 +7,7 @@ import { WalletManager } from './wallet';
 import { GameScene } from './game/GameScene';
 
 // Server port for WebSocket and API (same host as frontend, different port)
-const SERVER_PORT = 3001;
+const SERVER_PORT = 3000;
 
 // Game Configuration
 const config = {
@@ -88,24 +88,19 @@ class PizzaSkyRaceApp {
             this.startGame();
         });
 
-        // If a player joins an already-running race, they won't receive raceStarted,
-        // so we use joinedRace to set raceId + start the game loop (timer updates).
+        // When player joins, just set race ID - don't start game yet
+        // Wait for admin to trigger manualRaceStart
         this.socket.on('joinedRace', (data) => {
             if (!this.currentRaceId) {
                 this.currentRaceId = data.raceId;
             }
-            this.updateStatus(`Joined race #${data.raceId} (${data.playerCount} players)`);
-            this.startGame();
+            this.updateStatus(`Waiting for race to start... (${data.playerCount} players)`);
+            // Don't call this.startGame() here - wait for manualRaceStart
         });
         
         this.socket.on('playerJoined', (data) => {
             console.log('Player joined:', data);
             this.updateStatus(`${data.playerCount} players in race`);
-            this.updateAdminDashboard();
-        });
-        
-        this.socket.on('playerLeft', (data) => {
-            this.updateAdminDashboard();
         });
         
         this.socket.on('heightUpdate', (data) => {
@@ -121,24 +116,21 @@ class PizzaSkyRaceApp {
             this.updateTimer(this.timeRemaining);
         });
         
-        this.socket.on('lobbyUpdate', (data) => {
-            this.updateAdminLobby(data);
+        this.socket.on('timer', (data) => {
+            this.timeRemaining = data.timeRemaining;
+            this.updateTimer(this.timeRemaining);
         });
     }
     
     setupUI() {
         const joinBtn = document.getElementById('join-btn');
         const jumpBtn = document.getElementById('jump-btn');
-        const startRaceBtn = document.getElementById('start-race-btn');
         
         joinBtn.addEventListener('click', () => this.joinRace());
-        jumpBtn.addEventListener('click', () => this.jump());
-        
-        // Admin start race button
-        startRaceBtn.addEventListener('click', () => this.manualStartRace());
+        if (jumpBtn) jumpBtn.addEventListener('click', () => this.jump());
         
         // Mobile controls
-        if ('ontouchstart' in window) {
+        if ('ontouchstart' in window && jumpBtn) {
             jumpBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 this.jump();
@@ -186,7 +178,7 @@ class PizzaSkyRaceApp {
             // Connect to WebSocket server if not already connected
             if (!this.socket) {
                 console.log('🔌 Connecting to game server...');
-                this.socket = io(import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:3001');
+                this.socket = io(import.meta.env.VITE_WEBSOCKET_URL || 'http://localhost:3000');
                 this.setupSocketListeners();
                 
                 // Wait for connection
@@ -233,6 +225,12 @@ class PizzaSkyRaceApp {
     
     startGame() {
         this.updateStatus('🏁 Race started! GO!');
+        
+        // Start the race in the game scene
+        const scene = this.game.scene.getScene('GameScene');
+        if (scene && scene.startRace) {
+            scene.startRace();
+        }
         
         // Start sending height updates
         this.heightUpdateInterval = setInterval(() => {
@@ -339,47 +337,6 @@ class PizzaSkyRaceApp {
                 window.location.reload();
             }
         }, 5000);
-    }
-    
-    manualStartRace() {
-        if (!this.socket) {
-            alert('Not connected to server!');
-            return;
-        }
-        
-        console.log('🎮 Admin manually starting race...');
-        this.socket.emit('adminStartRace');
-    }
-    
-    updateAdminDashboard() {
-        if (this.socket) {
-            this.socket.emit('getGameState');
-        }
-    }
-    
-    updateAdminLobby(data) {
-        const playerCountElem = document.getElementById('admin-player-count');
-        const statusElem = document.getElementById('admin-status');
-        const playerListElem = document.getElementById('admin-player-list');
-        
-        if (playerCountElem) {
-            playerCountElem.textContent = data.playerCount || 0;
-        }
-        
-        if (statusElem) {
-            statusElem.textContent = data.raceActive ? 'Racing' : 'Waiting';
-            statusElem.style.color = data.raceActive ? '#00FF00' : '#FFFF00';
-        }
-        
-        if (playerListElem && data.players) {
-            playerListElem.innerHTML = '';
-            data.players.forEach(player => {
-                const div = document.createElement('div');
-                div.className = 'player-item';
-                div.textContent = `${player.slice(0, 8)}...`;
-                playerListElem.appendChild(div);
-            });
-        }
     }
 }
 

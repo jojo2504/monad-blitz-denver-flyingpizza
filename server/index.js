@@ -228,6 +228,13 @@ io.on('connection', (socket) => {
             startTime: currentRace.startTime
         });
         
+        // Also broadcast to admin dashboard
+        io.emit('lobbyUpdate', {
+            playerCount: currentRace.players.size,
+            raceActive: true,
+            players: Array.from(currentRace.players.keys())
+        });
+        
         console.log(`✅ Race ${currentRace.raceId} manually started with ${currentRace.players.size} players`);
     });
     

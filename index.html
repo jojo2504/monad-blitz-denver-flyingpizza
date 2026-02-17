@@ -109,60 +109,6 @@
             }
         }
         
-        /* Admin Dashboard */
-        #admin-dashboard {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.9);
-            padding: 15px;
-            border-radius: 10px;
-            z-index: 100;
-            min-width: 250px;
-            border: 2px solid #FFD700;
-        }
-        
-        #admin-dashboard h3 {
-            color: #FFD700;
-            margin-bottom: 10px;
-            font-size: 18px;
-        }
-        
-        #admin-dashboard .stat {
-            margin: 8px 0;
-            font-size: 14px;
-        }
-        
-        #admin-dashboard .stat strong {
-            color: #FFD700;
-        }
-        
-        #start-race-btn {
-            width: 100%;
-            margin-top: 10px;
-            background: #00FF00;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        
-        #admin-dashboard .player-list {
-            max-height: 200px;
-            overflow-y: auto;
-            margin-top: 10px;
-            font-size: 12px;
-        }
-        
-        #admin-dashboard .player-item {
-            padding: 5px;
-            background: rgba(255, 255, 255, 0.1);
-            margin: 3px 0;
-            border-radius: 3px;
-        }
-        
         .btn {
             background: #FFD700;
             color: #000;
@@ -238,15 +184,6 @@
     </style>
 </head>
 <body>
-    <!-- Admin Dashboard -->
-    <div id="admin-dashboard">
-        <h3>🎮 Admin Control</h3>
-        <div class="stat"><strong>Players:</strong> <span id="admin-player-count">0</span></div>
-        <div class="stat"><strong>Status:</strong> <span id="admin-status">Waiting</span></div>
-        <button class="btn" id="start-race-btn">START RACE</button>
-        <div class="player-list" id="admin-player-list"></div>
-    </div>
-    
     <div id="login-screen">
         <h1>🍕 Pizza Sky Race</h1>
         <p>Scan the QR code or tap the button to join the race!</p>

@@ -16,7 +16,8 @@ export class GameScene extends Phaser.Scene {
         this.platformTimer = 0;
         this.powerUpTimer = 0;
         this.clouds = [];
-        this.gameStarted = true;
+        this.gameStarted = false;  // Wait for admin to start
+        this.raceStarted = false;  // Race hasn't started yet
         this.isDead = false;
         this.spectating = false;
         this.gameStartTime = 0;
@@ -44,8 +45,10 @@ export class GameScene extends Phaser.Scene {
         this.player = this.physics.add.sprite(150, 300, 'player');
         this.player.setBounce(0);
         this.player.setCollideWorldBounds(false);
-        // Start with low gravity for a short tutorial window
-        this.player.body.setGravityY(250);
+        // No gravity until race starts
+        this.player.body.setGravityY(0);
+        this.player.body.setVelocityX(0);
+        this.player.body.setVelocityY(0);
         
         // Collisions
         this.physics.add.collider(this.player, this.platforms, () => {
@@ -66,9 +69,20 @@ export class GameScene extends Phaser.Scene {
         this.powerUps = this.physics.add.group();
         this.physics.add.overlap(this.player, this.powerUps, this.collectPowerUp, null, this);
         
-        this.gameStarted = true;
+        // Don't start game automatically - wait for admin
+        this.gameStarted = false;
+        this.raceStarted = false;
         this.isDead = false;
         this.spectating = false;
+        
+        // Show waiting message
+        this.waitingText = this.add.text(400, 300, 'Waiting for race to start...', {
+            fontSize: '32px',
+            fontStyle: 'bold',
+            color: '#FFFF00',
+            stroke: '#000000',
+            strokeThickness: 4
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(100);
         
         // Jump counter UI
         this.jumpCounterText = this.add.text(400, 50, 'Jumps: 1', {
@@ -86,6 +100,11 @@ export class GameScene extends Phaser.Scene {
     }
     
     update(time, delta) {
+        // Don't update game logic until race starts
+        if (!this.raceStarted) {
+            return;
+        }
+        
         // If dead, don't process player controls
         if (this.isDead) {
             if (this.spectating) {
@@ -95,8 +114,8 @@ export class GameScene extends Phaser.Scene {
             return;
         }
         
-        // Tutorial period: easier gravity for first 5 seconds AFTER first jump
-        if (this.gameStartTime !== null) {
+        // Tutorial period: easier gravity for first 5 seconds AFTER first jump (only if race started)
+        if (this.raceStarted && this.gameStartTime !== null) {
             const elapsedTime = Date.now() - this.gameStartTime;
             if (elapsedTime > 5000 && this.player.body.gravity.y <= 250) {
                 // Transition to normal gravity after 5 seconds
@@ -228,8 +247,8 @@ export class GameScene extends Phaser.Scene {
             if (this.player.tintTopLeft) this.player.clearTint();
         }
         
-        // Gradually increase difficulty
-        if (this.score > 50) {
+        // Gradually increase difficulty (only if race has started)
+        if (this.raceStarted && this.score > 50) {
             // Speed ramps up faster; holding 60s should be hard
             this.gameSpeed = Math.min(620, 300 + (this.score / 4.5));
             // Gravity ramps up too (unless debuffed even higher)
@@ -242,6 +261,11 @@ export class GameScene extends Phaser.Scene {
     
     startRace() {
         this.gameStarted = true;
+        this.raceStarted = true;  // Allow game to update
+        
+        // Enable gravity now that race is starting
+        this.player.body.setGravityY(200); // Start with low gravity
+        
         if (this.waitingText) {
             this.waitingText.destroy();
         }
