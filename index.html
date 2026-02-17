@@ -13,7 +13,7 @@
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
-        
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #ec4899 0%, #9333ea 40%, #eab308 100%);
@@ -46,7 +46,7 @@
             animation: floatDown linear infinite;
         }
         @keyframes floatDown {
-            0% { transform: translateY(-80px) rotate(0deg); }
+            0%   { transform: translateY(-80px) rotate(0deg); }
             100% { transform: translateY(110vh) rotate(360deg); }
         }
 
@@ -58,162 +58,12 @@
             pointer-events: none;
             z-index: 0;
         }
-        .corner-pizza.top-left {
-            top: 20px;
-            left: 20px;
-            animation: spinCW 20s linear infinite;
-        }
-        .corner-pizza.bottom-right {
-            bottom: 20px;
-            right: 20px;
-            animation: spinCCW 20s linear infinite;
-        }
-        @keyframes spinCW { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes spinCCW { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
-        
-        #game-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            width: 100vw;
-            position: relative;
-        }
-        
-        #phaser-game {
-            width: 100%;
-            max-width: 800px;
-            height: auto;
-            aspect-ratio: 4/3;
-        }
-        
-        #phaser-game canvas {
-            display: block;
-            width: 100% !important;
-            height: auto !important;
-        }
-        
-        #ui-overlay {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 10;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            padding: 10px;
-            border-radius: 20px;
-            max-width: 250px;
-            font-size: 14px;
-            border: 2px solid rgba(255,255,255,0.15);
-        }
-        
-        @media (max-width: 768px) {
-            #ui-overlay {
-                font-size: 12px;
-                padding: 8px;
-                max-width: 200px;
-            }
-        }
-        
-        #timer {
-            font-size: 48px;
-            font-weight: 900;
-            color: #facc15;
-            text-align: center;
-            margin-bottom: 10px;
-        }
-        
-        #height {
-            font-size: 24px;
-            margin: 10px 0;
-        }
-        
-        #leaderboard {
-            margin-top: 20px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        
-        .player-entry {
-            padding: 5px;
-            margin: 5px 0;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            font-size: 14px;
-        }
-        
-        #controls {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            z-index: 10;
-        }
-        
-        @media (max-width: 768px) {
-            #controls {
-                bottom: 5px;
-                right: 5px;
-            }
-            
-            .btn {
-                padding: 12px 24px;
-                font-size: 16px;
-            }
-        }
-        
-        .btn {
-            background: white;
-            color: #030213;
-            border: 6px solid black;
-            padding: 18px 48px;
-            font-size: 22px;
-            font-weight: 900;
-            border-radius: 9999px;
-            cursor: pointer;
-            margin: 10px 5px;
-            transition: all 0.2s ease;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            position: relative;
-            z-index: 1;
-            font-family: 'Inter', sans-serif;
-        }
-        
-        .btn:hover {
-            transform: translateY(-4px) scale(1.05);
-            box-shadow: 0 16px 50px rgba(0, 0, 0, 0.4);
-        }
-        
-        .btn:active {
-            transform: translateY(2px) scale(0.98);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-        
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .corner-pizza.top-left     { top: 20px; left: 20px;   animation: spinCW  20s linear infinite; }
+        .corner-pizza.bottom-right { bottom: 20px; right: 20px; animation: spinCCW 20s linear infinite; }
+        @keyframes spinCW  { from { transform: rotate(0deg);    } to { transform: rotate(360deg);  } }
+        @keyframes spinCCW { from { transform: rotate(0deg);    } to { transform: rotate(-360deg); } }
 
-        .btn-glow {
-            position: relative;
-        }
-        .btn-glow::before {
-            content: '';
-            position: absolute;
-            inset: -8px;
-            background: linear-gradient(90deg, #ec4899, #9333ea, #eab308);
-            border-radius: 9999px;
-            filter: blur(18px);
-            opacity: 0.6;
-            z-index: -1;
-            transition: opacity 0.3s;
-        }
-        .btn-glow:hover::before {
-            opacity: 1;
-        }
-        
+        /* ─── LOGIN SCREEN ─────────────────────────────────────── */
         #login-screen {
             position: relative;
             width: 100%;
@@ -226,13 +76,12 @@
             padding: 40px 20px 80px 20px;
             overflow-y: visible;
         }
-        
+
         .pizza-title {
             font-size: 96px;
-            margin-bottom: 0;
             color: white;
             -webkit-text-stroke: 3px black;
-            text-shadow: 
+            text-shadow:
                 4px 4px 0px rgba(255, 0, 255, 0.5),
                 8px 8px 0px rgba(0, 255, 255, 0.5);
             font-weight: 900;
@@ -246,7 +95,7 @@
         }
         @keyframes titleWiggle {
             0%, 100% { transform: rotate(-1deg) scale(1); }
-            50% { transform: rotate(1deg) scale(1.02); }
+            50%       { transform: rotate(1deg) scale(1.02); }
         }
 
         .subtitle {
@@ -260,53 +109,71 @@
         }
         @keyframes subtitlePulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.08); }
+            50%       { transform: scale(1.08); }
         }
-        .subtitle span {
-            font-size: 28px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            color: white;
-        }
-        .subtitle .star {
-            color: #facc15;
-            font-size: 28px;
-        }
+        .subtitle span { font-size: 28px; font-weight: 900; text-transform: uppercase; letter-spacing: 4px; color: white; }
+        .subtitle .star { color: #facc15; font-size: 28px; }
 
-        /* Info cards - like the reference project's stats */
         .info-card {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255,255,255,0.9);
             backdrop-filter: blur(10px);
             border-radius: 24px;
             padding: 28px 36px;
             border: 6px solid black;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             color: #030213;
             text-align: center;
             max-width: 600px;
             width: 90%;
             margin: 12px 0;
         }
-        .info-card h3 {
-            font-size: 24px;
-            font-weight: 900;
-            text-transform: uppercase;
+        .info-card h3        { font-size: 24px; font-weight: 900; text-transform: uppercase; margin-bottom: 8px; }
+        .info-card p         { font-size: 16px; font-weight: 500; color: #555; line-height: 1.5; }
+        .info-card .big-icon { font-size: 48px; margin-bottom: 8px; }
+
+        /* Pseudo input block */
+        #pseudo-section {
+            max-width: 420px;
+            width: 90%;
+            margin: 16px 0 8px 0;
+        }
+        #pseudo-section label {
+            display: block;
+            font-size: 15px;
+            font-weight: 700;
+            color: #FFDD57;
             margin-bottom: 8px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            letter-spacing: 0.5px;
         }
-        .info-card p {
-            font-size: 16px;
-            font-weight: 500;
-            color: #555;
-            line-height: 1.5;
+        #pseudo-input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 14px;
+            border: 3px solid rgba(255,255,255,0.35);
+            background: rgba(255,255,255,0.15);
+            color: #FFFFFF;
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s, background 0.2s;
         }
-        .info-card .big-icon {
-            font-size: 48px;
-            margin-bottom: 8px;
+        #pseudo-input::placeholder { color: rgba(255,255,255,0.45); font-weight: 400; }
+        #pseudo-input:focus {
+            border-color: #FFDD57;
+            background: rgba(255,255,255,0.22);
         }
-        
+        #pseudo-hint {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 4px;
+            text-align: right;
+        }
+
         .scan-label {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255,255,255,0.9);
             backdrop-filter: blur(10px);
             color: #030213;
             padding: 16px 32px;
@@ -315,7 +182,7 @@
             text-align: center;
             border-radius: 24px;
             border: 6px solid black;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             letter-spacing: 1px;
             text-transform: uppercase;
             margin-top: 24px;
@@ -330,34 +197,16 @@
             position: relative;
             z-index: 1;
         }
-        
+
         #qr-code {
             margin: 20px 0;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255,255,255,0.95);
             padding: 24px;
             border-radius: 24px;
             border: 6px solid black;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             position: relative;
             z-index: 1;
-        }
-        
-        .hidden {
-            display: none !important;
-        }
-        
-        #wallet-info {
-            font-size: 12px;
-            margin-top: 10px;
-            word-break: break-all;
-        }
-        
-        #status {
-            margin-top: 10px;
-            padding: 10px;
-            background: rgba(255, 215, 0, 0.2);
-            border-radius: 12px;
-            font-size: 14px;
         }
 
         .or-divider {
@@ -370,7 +219,6 @@
             letter-spacing: 6px;
         }
 
-        /* Stats row like the reference project */
         .stats-row {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -380,166 +228,281 @@
             margin: 24px 0;
         }
         .stat-card {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255,255,255,0.9);
             backdrop-filter: blur(10px);
             border-radius: 24px;
             padding: 20px 12px;
             border: 6px solid black;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             text-align: center;
         }
-        .stat-card .stat-value {
-            font-size: 32px;
-            font-weight: 900;
-            line-height: 1.2;
-        }
-        .stat-card .stat-label {
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #555;
-            letter-spacing: 1px;
-            margin-top: 4px;
-        }
-        .stat-pink { color: #ec4899; }
+        .stat-card .stat-value  { font-size: 32px; font-weight: 900; line-height: 1.2; }
+        .stat-card .stat-label  { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #555; letter-spacing: 1px; margin-top: 4px; }
+        .stat-pink   { color: #ec4899; }
         .stat-purple { color: #9333ea; }
         .stat-yellow { color: #ca8a04; }
 
-        /* Footer badge */
         .footer-badge {
             display: inline-block;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0,0,0,0.5);
             backdrop-filter: blur(10px);
             padding: 14px 28px;
             border-radius: 9999px;
-            border: 3px solid rgba(255, 255, 255, 0.6);
+            border: 3px solid rgba(255,255,255,0.6);
             margin-top: 28px;
             margin-bottom: 20px;
         }
-        .footer-badge p {
-            font-size: 14px;
-            font-weight: 700;
+        .footer-badge p { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: white; margin: 4px 0; }
+
+        /* ─── BUTTONS ───────────────────────────────────────────── */
+        .btn {
+            background: white;
+            color: #030213;
+            border: 6px solid black;
+            padding: 18px 48px;
+            font-size: 22px;
+            font-weight: 900;
+            border-radius: 9999px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.2s ease;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             text-transform: uppercase;
             letter-spacing: 2px;
-            color: white;
-            margin: 4px 0;
+            position: relative;
+            z-index: 1;
+            font-family: 'Inter', sans-serif;
         }
-        
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .pizza-title {
-                font-size: 56px;
-                -webkit-text-stroke: 2px black;
-                letter-spacing: 3px;
-            }
-            
-            .subtitle span {
-                font-size: 20px;
-                letter-spacing: 2px;
-            }
-            
-            .info-card {
-                padding: 20px 24px;
-                border-width: 4px;
-            }
-            .info-card h3 { font-size: 18px; }
-            .info-card p { font-size: 14px; }
-            
-            #qr-code {
-                padding: 16px;
-                border-width: 4px;
-            }
-            
-            .btn {
-                font-size: 16px;
-                padding: 14px 28px;
-                border-width: 4px;
-            }
-            
-            .scan-label {
-                font-size: 16px;
-                padding: 12px 20px;
-                border-width: 4px;
-            }
+        .btn:hover   { transform: translateY(-4px) scale(1.05); box-shadow: 0 16px 50px rgba(0,0,0,0.4); }
+        .btn:active  { transform: translateY(2px) scale(0.98);  box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-            .stats-row {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 8px;
-            }
-            .stat-card {
-                padding: 14px 8px;
-                border-width: 4px;
-                border-radius: 16px;
-            }
+        .btn-glow { position: relative; }
+        .btn-glow::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            background: linear-gradient(90deg, #ec4899, #9333ea, #eab308);
+            border-radius: 9999px;
+            filter: blur(18px);
+            opacity: 0.6;
+            z-index: -1;
+            transition: opacity 0.3s;
+        }
+        .btn-glow:hover::before { opacity: 1; }
+
+        /* ─── GAME CONTAINER ────────────────────────────────────── */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+        }
+
+        #phaser-game { width: 100%; max-width: 800px; height: auto; aspect-ratio: 4/3; }
+        #phaser-game canvas { display: block; width: 100% !important; height: auto !important; }
+
+        /* ─── TIMER WRAPPER (visible only during race) ──────────── */
+        /*    Starts hidden — shown by main.js startGame()           */
+        #timer-wrapper {
+            display: none; /* shown by JS when race starts */
+            position: absolute;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 8px 28px 10px 28px;
+            z-index: 20;
+            text-align: center;
+            border: 2px solid rgba(255,255,255,0.18);
+            pointer-events: none;
+        }
+        #timer-wrapper .timer-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 2px;
+        }
+        #timer {
+            font-size: 48px;
+            font-weight: 900;
+            color: #facc15;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ─── STATUS BAR (always present, subtle) ───────────────── */
+        #status-bar {
+            position: absolute;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(6px);
+            border-radius: 12px;
+            padding: 6px 18px;
+            z-index: 20;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        #status {
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.85);
+            letter-spacing: 0.3px;
+        }
+        #wallet-info {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 2px;
+            text-align: center;
+            word-break: break-all;
+        }
+
+        /* ─── LEADERBOARD PANEL (visible only after race ends) ──── */
+        /*    Starts hidden — shown by main.js endGame()             */
+        #leaderboard-panel {
+            display: none; /* shown by JS when race ends */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.82);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 28px 32px;
+            z-index: 30;
+            min-width: 300px;
+            max-width: 420px;
+            width: 90%;
+            border: 2px solid rgba(255,255,255,0.2);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        #leaderboard-panel h3 {
+            font-size: 20px;
+            font-weight: 900;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #facc15;
+            margin-bottom: 8px;
+        }
+        #height {
+            display: none; /* shown by JS after race */
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        #leaderboard-list { max-height: 260px; overflow-y: auto; }
+        .player-entry {
+            padding: 8px 10px;
+            margin: 6px 0;
+            background: rgba(255,255,255,0.08);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        /* ─── CONTROLS ──────────────────────────────────────────── */
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            z-index: 10;
+        }
+
+        /* ─── HIDDEN UTILITY ─────────────────────────────────────── */
+        .hidden { display: none !important; }
+
+        /* ─── RESPONSIVE ────────────────────────────────────────── */
+        @media (max-width: 768px) {
+            .pizza-title  { font-size: 56px; -webkit-text-stroke: 2px black; letter-spacing: 3px; }
+            .subtitle span { font-size: 20px; letter-spacing: 2px; }
+            .info-card    { padding: 20px 24px; border-width: 4px; }
+            .info-card h3 { font-size: 18px; }
+            .info-card p  { font-size: 14px; }
+            #qr-code      { padding: 16px; border-width: 4px; }
+            .btn          { font-size: 16px; padding: 14px 28px; border-width: 4px; }
+            .scan-label   { font-size: 16px; padding: 12px 20px; border-width: 4px; }
+            .stats-row    { gap: 8px; }
+            .stat-card    { padding: 14px 8px; border-width: 4px; border-radius: 16px; }
             .stat-card .stat-value { font-size: 22px; }
             .stat-card .stat-label { font-size: 10px; }
-
             .corner-pizza { font-size: 40px; }
+            #controls .btn { padding: 12px 24px; font-size: 16px; }
+            #timer        { font-size: 36px; }
         }
-        
-        @media (max-width: 480px) {
-            .pizza-title {
-                font-size: 42px;
-                letter-spacing: 2px;
-            }
-            
-            .subtitle span { font-size: 16px; }
 
-            .stats-row { gap: 6px; }
+        @media (max-width: 480px) {
+            .pizza-title  { font-size: 42px; letter-spacing: 2px; }
+            .subtitle span { font-size: 16px; }
+            .stats-row    { gap: 6px; }
             .stat-card .stat-value { font-size: 18px; }
         }
     </style>
 </head>
 <body>
+
     <!-- Grid Overlay -->
     <div class="grid-overlay"></div>
 
     <!-- Floating Pizzas Background -->
-    <div class="floating-pizza" style="left: 2%; font-size: 95px; animation-duration: 16s; animation-delay: 0s;">🍕</div>
-    <div class="floating-pizza" style="left: 7%; font-size: 40px; animation-duration: 12s; animation-delay: 3s;">🍕</div>
+    <div class="floating-pizza" style="left:  2%; font-size:  95px; animation-duration: 16s; animation-delay: 0s;">🍕</div>
+    <div class="floating-pizza" style="left:  7%; font-size:  40px; animation-duration: 12s; animation-delay: 3s;">🍕</div>
     <div class="floating-pizza" style="left: 12%; font-size: 110px; animation-duration: 19s; animation-delay: 1s;">🍕</div>
-    <div class="floating-pizza" style="left: 18%; font-size: 32px; animation-duration: 14s; animation-delay: 5s;">🍕</div>
-    <div class="floating-pizza" style="left: 22%; font-size: 72px; animation-duration: 17s; animation-delay: 2s;">🍕</div>
-    <div class="floating-pizza" style="left: 28%; font-size: 28px; animation-duration: 11s; animation-delay: 0.5s;">🍕</div>
-    <div class="floating-pizza" style="left: 33%; font-size: 88px; animation-duration: 20s; animation-delay: 4s;">🍕</div>
-    <div class="floating-pizza" style="left: 38%; font-size: 55px; animation-duration: 13s; animation-delay: 1.5s;">🍕</div>
+    <div class="floating-pizza" style="left: 18%; font-size:  32px; animation-duration: 14s; animation-delay: 5s;">🍕</div>
+    <div class="floating-pizza" style="left: 22%; font-size:  72px; animation-duration: 17s; animation-delay: 2s;">🍕</div>
+    <div class="floating-pizza" style="left: 28%; font-size:  28px; animation-duration: 11s; animation-delay: 0.5s;">🍕</div>
+    <div class="floating-pizza" style="left: 33%; font-size:  88px; animation-duration: 20s; animation-delay: 4s;">🍕</div>
+    <div class="floating-pizza" style="left: 38%; font-size:  55px; animation-duration: 13s; animation-delay: 1.5s;">🍕</div>
     <div class="floating-pizza" style="left: 43%; font-size: 105px; animation-duration: 18s; animation-delay: 3.5s;">🍕</div>
-    <div class="floating-pizza" style="left: 48%; font-size: 36px; animation-duration: 15s; animation-delay: 0s;">🍕</div>
-    <div class="floating-pizza" style="left: 53%; font-size: 78px; animation-duration: 12s; animation-delay: 2.5s;">🍕</div>
-    <div class="floating-pizza" style="left: 58%; font-size: 48px; animation-duration: 16s; animation-delay: 4.5s;">🍕</div>
+    <div class="floating-pizza" style="left: 48%; font-size:  36px; animation-duration: 15s; animation-delay: 0s;">🍕</div>
+    <div class="floating-pizza" style="left: 53%; font-size:  78px; animation-duration: 12s; animation-delay: 2.5s;">🍕</div>
+    <div class="floating-pizza" style="left: 58%; font-size:  48px; animation-duration: 16s; animation-delay: 4.5s;">🍕</div>
     <div class="floating-pizza" style="left: 63%; font-size: 100px; animation-duration: 21s; animation-delay: 1s;">🍕</div>
-    <div class="floating-pizza" style="left: 68%; font-size: 30px; animation-duration: 10s; animation-delay: 3s;">🍕</div>
-    <div class="floating-pizza" style="left: 73%; font-size: 65px; animation-duration: 14s; animation-delay: 5s;">🍕</div>
+    <div class="floating-pizza" style="left: 68%; font-size:  30px; animation-duration: 10s; animation-delay: 3s;">🍕</div>
+    <div class="floating-pizza" style="left: 73%; font-size:  65px; animation-duration: 14s; animation-delay: 5s;">🍕</div>
     <div class="floating-pizza" style="left: 78%; font-size: 110px; animation-duration: 22s; animation-delay: 0.5s;">🍕</div>
-    <div class="floating-pizza" style="left: 83%; font-size: 42px; animation-duration: 13s; animation-delay: 2s;">🍕</div>
-    <div class="floating-pizza" style="left: 88%; font-size: 85px; animation-duration: 17s; animation-delay: 4s;">🍕</div>
-    <div class="floating-pizza" style="left: 93%; font-size: 58px; animation-duration: 15s; animation-delay: 1.5s;">🍕</div>
-    <div class="floating-pizza" style="left: 97%; font-size: 34px; animation-duration: 11s; animation-delay: 3.5s;">🍕</div>
+    <div class="floating-pizza" style="left: 83%; font-size:  42px; animation-duration: 13s; animation-delay: 2s;">🍕</div>
+    <div class="floating-pizza" style="left: 88%; font-size:  85px; animation-duration: 17s; animation-delay: 4s;">🍕</div>
+    <div class="floating-pizza" style="left: 93%; font-size:  58px; animation-duration: 15s; animation-delay: 1.5s;">🍕</div>
+    <div class="floating-pizza" style="left: 97%; font-size:  34px; animation-duration: 11s; animation-delay: 3.5s;">🍕</div>
 
     <!-- Corner Rotating Pizzas -->
     <div class="corner-pizza top-left">🍕</div>
     <div class="corner-pizza bottom-right">🍕</div>
 
+    <!-- ═══════════════════════════════════════════════════
+         LOGIN SCREEN
+    ════════════════════════════════════════════════════ -->
     <div id="login-screen">
-        <!-- Main Title -->
+
         <div class="pizza-title">PIZZA</div>
-        <div class="pizza-title" style="font-size: 72px; margin-top: -4px;">SKY RACE</div>
-        
-        <!-- Subtitle with stars -->
+        <div class="pizza-title" style="font-size:72px; margin-top:-4px;">SKY RACE</div>
+
         <div class="subtitle">
             <span class="star">★</span>
             <span>Global Edition</span>
             <span class="star">★</span>
         </div>
 
-        <!-- Description Card -->
+        <!-- Description -->
         <div class="info-card">
             <div class="big-icon">🍕</div>
             <h3>Epic Vertical Race</h3>
             <p>Fly through the sky, collect power-ups and win NFTs on the Monad blockchain!</p>
         </div>
 
-        <!-- Stats row -->
+        <!-- Stats -->
         <div class="stats-row">
             <div class="stat-card">
                 <div class="stat-value stat-pink">∞</div>
@@ -554,53 +517,86 @@
                 <div class="stat-label">Fees</div>
             </div>
         </div>
-        
-        <!-- Scan Label -->
-        <div class="scan-label">
-            📱 Scan the QR code with your phone
-        </div>
-        
+
         <!-- QR Code -->
+        <div class="scan-label">📱 Scan the QR code with your phone</div>
         <div id="qr-code"></div>
-        
-        <!-- Or divider -->
+
         <div class="or-divider">— OR —</div>
-        
-        <!-- Join Button -->
+
+        <!-- ✅ Pseudo input — ID referenced by main.js joinRace() -->
+        <div id="pseudo-section">
+            <label for="pseudo-input">✏️ Ton pseudo</label>
+            <input
+                id="pseudo-input"
+                type="text"
+                maxlength="16"
+                placeholder="Ex: PizzaKing"
+                autocomplete="off"
+                spellcheck="false"
+            />
+            <div id="pseudo-hint">Max 16 caractères</div>
+        </div>
+
+        <!-- Join Button — ID referenced by main.js setupUI() -->
         <button class="btn btn-glow" id="join-btn">
             🚀 Join the Race
         </button>
-        
-        <!-- Footer Badge -->
+
         <div class="footer-badge">
-            <p>🍕 Powered by Monad & ERC-4337 🍕</p>
-            <p style="font-size: 12px; opacity: 0.8;">🔐 Passkey · 💸 Gasless · ⚡ Instant</p>
+            <p>🍕 Powered by Monad &amp; ERC-4337 🍕</p>
+            <p style="font-size:12px; opacity:0.8;">🔐 Passkey · 💸 Gasless · ⚡ Instant</p>
         </div>
-    </div>
-    
+
+    </div><!-- /#login-screen -->
+
+
+    <!-- ═══════════════════════════════════════════════════
+         GAME CONTAINER
+    ════════════════════════════════════════════════════ -->
     <div id="game-container" class="hidden">
-        <div id="ui-overlay">
-            <div id="timer">60</div>
-            <div id="height">Score: 0</div>
-            <div id="wallet-info"></div>
-            <div id="status">Ready to race!</div>
-            <div id="leaderboard">
-                <h3>🏆 Leaderboard</h3>
-                <div id="leaderboard-list"></div>
-            </div>
-        </div>
-        
+
+        <!-- Phaser canvas mount point -->
         <div id="phaser-game"></div>
-        
+
+        <!-- ✅ TIMER WRAPPER — hidden until startGame(), shown during race only
+             ID referenced: main.js startGame() + endGame() -->
+        <div id="timer-wrapper">
+            <div class="timer-label">Temps restant</div>
+            <!-- ✅ ID "timer" — referenced by main.js updateTimer() -->
+            <div id="timer">60</div>
+        </div>
+
+        <!-- ✅ STATUS BAR — always accessible, used by main.js updateStatus()
+             Stays visible throughout; content changes at each phase -->
+        <div id="status-bar">
+            <!-- ✅ ID "status" — referenced by main.js updateStatus() -->
+            <div id="status">Ready to race!</div>
+            <!-- ✅ ID "wallet-info" — referenced by main.js joinRace() -->
+            <div id="wallet-info"></div>
+        </div>
+
+        <!-- ✅ LEADERBOARD PANEL — hidden during race, revealed at endGame()
+             IDs referenced: main.js setupUI(), startGame(), endGame(), updateLeaderboard() -->
+        <div id="leaderboard-panel">
+            <h3>🏆 Classement final</h3>
+            <!-- ✅ ID "height" — referenced by main.js setupUI() + endGame() -->
+            <div id="height"></div>
+            <!-- ✅ ID "leaderboard-list" — referenced by main.js updateLeaderboard() -->
+            <div id="leaderboard-list"></div>
+        </div>
+
+        <!-- Jump button (mobile) — ID referenced by main.js setupUI() -->
         <div id="controls">
             <button class="btn" id="jump-btn">🍕 JUMP / SPACE</button>
-            <div style="color: white; font-size: 12px; margin-top: 10px; text-align: center;">
+            <div style="color:white; font-size:12px; margin-top:10px; text-align:center;">
                 Tap screen or press SPACE to jump!<br>
-                Collect 🍕 Pepperoni (+10) | Avoid 🍍 Pineapple (-5)
+                Collect 🍕 Pepperoni (+6) | Avoid 🍍 Pineapple (-12)
             </div>
         </div>
-    </div>
-    
+
+    </div><!-- /#game-container -->
+
     <script type="module" src="/src/main.js"></script>
 </body>
 </html>
