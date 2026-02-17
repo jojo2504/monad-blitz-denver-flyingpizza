@@ -46,15 +46,18 @@ class PizzaSkyRaceApp {
         // Initialize wallet manager
         this.walletManager = new WalletManager();
         
-        // Connect to WebSocket server (use current hostname so phone connects to LAN IP when on same WiFi)
-        // In production on Railway, use wss:// if HTTPS, otherwise ws://
+        // Connect to WebSocket server
+        // In production: use same origin (Railway serves both frontend and backend)
+        // In local dev: frontend on 3001, server on 3000
         let wsUrl;
-        if (import.meta.env.VITE_WEBSOCKET_URL && import.meta.env.PROD) {
-            wsUrl = import.meta.env.VITE_WEBSOCKET_URL;
+        if (window.location.hostname === 'localhost') {
+            // Local dev: connect to server port
+            wsUrl = `http://localhost:${SERVER_PORT}`;
         } else {
-            // Local dev: frontend (3000) and server (3001) are different ports
-            wsUrl = `ws://${window.location.hostname}:${SERVER_PORT}`;
+            // Production: connect to same origin (auto-detects wss:// for HTTPS)
+            wsUrl = window.location.origin;
         }
+        console.log('🔌 Connecting to:', wsUrl);
         this.socket = io(wsUrl);
 
         // IMPORTANT: without this, timer/leaderboard events won't be handled
@@ -178,7 +181,11 @@ class PizzaSkyRaceApp {
             // Connect to WebSocket server if not already connected
             if (!this.socket) {
                 console.log('🔌 Connecting to game server...');
-                this.socket = io(import.meta.env.VITE_WEBSOCKET_URL || 'http://localhost:3000');
+                const wsUrl = window.location.hostname === 'localhost' 
+                    ? `http://localhost:${SERVER_PORT}` 
+                    : window.location.origin;
+                console.log('🔌 Socket URL:', wsUrl);
+                this.socket = io(wsUrl);
                 this.setupSocketListeners();
                 
                 // Wait for connection
