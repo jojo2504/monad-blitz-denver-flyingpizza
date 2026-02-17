@@ -54,7 +54,6 @@ class PizzaSkyRaceApp {
         }
         this.socket = io(wsUrl);
         
-        this.setupSocketListeners();
         this.setupUI();
         
         // Generate QR code for joining
@@ -63,7 +62,11 @@ class PizzaSkyRaceApp {
     
     setupSocketListeners() {
         this.socket.on('connect', () => {
-            console.log('Connected to game server');
+            console.log('✅ WebSocket connected - ID:', this.socket.id);
+        });
+        
+        this.socket.on('disconnect', () => {
+            console.log('❌ WebSocket disconnected');
         });
         
         this.socket.on('raceStarted', (data) => {
@@ -144,6 +147,19 @@ class PizzaSkyRaceApp {
         try {
             this.updateStatus('Creating Smart Account...');
             
+            // Connect to WebSocket server if not already connected
+            if (!this.socket) {
+                console.log('🔌 Connecting to game server...');
+                this.socket = io(import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:3001');
+                this.setupSocketListeners();
+                
+                // Wait for connection
+                await new Promise((resolve) => {
+                    this.socket.once('connect', resolve);
+                });
+                console.log('✅ Connected to game server');
+            }
+            
             // Create Smart Account with Passkey
             const account = await this.walletManager.createSmartAccount();
             this.playerId = account.address;
@@ -223,7 +239,7 @@ class PizzaSkyRaceApp {
     
     updateHeight(height) {
         this.currentHeight = height;
-        document.getElementById('height').textContent = `Height: ${Math.floor(height)}m`;
+        document.getElementById('height').textContent = `Score: ${Math.floor(height)}`;
     }
     
     updateTimer(seconds) {
@@ -241,7 +257,7 @@ class PizzaSkyRaceApp {
             div.innerHTML = `
                 ${index + 1}. ${isMe ? '👤 YOU' : '🍕'} 
                 ${entry.playerId.slice(0, 6)}... 
-                <span style="float: right">${Math.floor(entry.height)}m</span>
+                <span style="float: right">${Math.floor(entry.height)} pts</span>
             `;
             if (isMe) {
                 div.style.background = 'rgba(255, 215, 0, 0.3)';

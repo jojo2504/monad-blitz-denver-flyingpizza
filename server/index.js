@@ -119,7 +119,7 @@ class Race {
 
 // Socket.IO Connection Handler
 io.on('connection', (socket) => {
-    console.log('Player connected:', socket.id);
+    console.log('🔌 Player connected:', socket.id);
     
     // Join Race
     socket.on('joinRace', (data) => {
@@ -206,6 +206,7 @@ io.on('connection', (socket) => {
         const playerData = gameState.players.get(socket.id);
         
         if (playerData) {
+            console.log('🔌 Player disconnected:', playerData.playerId);
             const race = gameState.races.get(playerData.raceId);
             if (race) {
                 race.players.delete(playerData.playerId);
