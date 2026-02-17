@@ -2,11 +2,30 @@ const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const os = require('os');
 require('dotenv').config();
+
+/** Get first non-internal IPv4 address for LAN access (e.g. for QR code on phone) */
+function getLocalIP() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) return iface.address;
+        }
+    }
+    return 'localhost';
+}
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from Vite build in production
+const path = require('path');
+const isProduction = process.env.NODE_ENV === 'production';
+if (isProduction) {
+    app.use(express.static(path.join(__dirname, '../dist')));
+}
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -209,6 +228,25 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: Date.now() });
 });
 
+// URLs for joining from phone on same WiFi (LAN IP so QR code works) or Railway URL in production
+app.get('/api/host-url', (req, res) => {
+    if (isProduction && process.env.RAILWAY_PUBLIC_DOMAIN) {
+        // In production on Railway, use the public domain
+        const protocol = process.env.RAILWAY_STATIC_URL ? 'https' : 'http';
+        const domain = process.env.RAILWAY_PUBLIC_DOMAIN || req.headers.host;
+        const appUrl = `${protocol}://${domain}`;
+        const wsUrl = `wss://${domain}`;
+        res.json({ appUrl, wsUrl });
+    } else {
+        // In development, use LAN IP
+        const host = getLocalIP();
+        const port = process.env.PORT || 3000;
+        const appUrl = `http://${host}:${port}`;
+        const wsUrl = `ws://${host}:${process.env.PORT || 3001}`;
+        res.json({ appUrl, wsUrl });
+    }
+});
+
 app.get('/api/races/current', (req, res) => {
     const currentRace = gameState.races.get(gameState.currentRaceId);
     
@@ -276,10 +314,26 @@ setInterval(() => {
     });
 }, 300000); // Every 5 minutes
 
+// Serve frontend for all non-API routes in production
+if (isProduction) {
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, '../dist/index.html'));
+    });
+}
+
 // Start server
-const PORT = process.env.WEBSOCKET_PORT || 3001;
-httpServer.listen(PORT, () => {
+// Railway uses PORT env var, fallback to WEBSOCKET_PORT for local dev
+const PORT = process.env.PORT || process.env.WEBSOCKET_PORT || 3001;
+httpServer.listen(PORT, '0.0.0.0', () => {
+    const lan = getLocalIP();
     console.log(`🍕 Pizza Sky Race Server running on port ${PORT}`);
-    console.log(`WebSocket: ws://localhost:${PORT}`);
-    console.log(`HTTP API: http://localhost:${PORT}`);
+    if (isProduction && process.env.RAILWAY_PUBLIC_DOMAIN) {
+        console.log(`🌐 Public URL: https://${process.env.RAILWAY_PUBLIC_DOMAIN}`);
+    } else {
+        console.log(`WebSocket: ws://localhost:${PORT}`);
+        console.log(`HTTP API: http://localhost:${PORT}`);
+        if (lan !== 'localhost') {
+            console.log(`📱 Join from phone: http://${lan}:${PORT} (scan QR on game page)`);
+        }
+    }
 });

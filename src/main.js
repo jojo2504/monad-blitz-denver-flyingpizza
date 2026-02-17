@@ -6,6 +6,9 @@ import QRCode from 'qrcode';
 import { WalletManager } from './wallet';
 import { GameScene } from './game/GameScene';
 
+// Server port for WebSocket and API (same host as frontend, different port)
+const SERVER_PORT = 3001;
+
 // Game Configuration
 const config = {
     type: Phaser.AUTO,
@@ -39,8 +42,17 @@ class PizzaSkyRaceApp {
         // Initialize wallet manager
         this.walletManager = new WalletManager();
         
-        // Connect to WebSocket server
-        this.socket = io(import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:3001');
+        // Connect to WebSocket server (use current hostname so phone connects to LAN IP when on same WiFi)
+        // In production on Railway, use wss:// if HTTPS, otherwise ws://
+        let wsUrl;
+        if (import.meta.env.VITE_WEBSOCKET_URL && import.meta.env.PROD) {
+            wsUrl = import.meta.env.VITE_WEBSOCKET_URL;
+        } else {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const port = window.location.port ? `:${window.location.port}` : '';
+            wsUrl = `${protocol}//${window.location.hostname}${port}`;
+        }
+        this.socket = io(wsUrl);
         
         this.setupSocketListeners();
         this.setupUI();
@@ -96,9 +108,23 @@ class PizzaSkyRaceApp {
     }
     
     async generateQRCode() {
-        const url = window.location.href;
         const qrContainer = document.getElementById('qr-code');
-        
+        // Use LAN URL from server so phone can open the game (same WiFi) or Railway URL in production
+        let url = window.location.href;
+        try {
+            // Use same protocol and hostname as current page, API is on same server
+            const protocol = window.location.protocol;
+            const hostname = window.location.hostname;
+            const port = window.location.port ? `:${window.location.port}` : '';
+            const serverBase = `${protocol}//${hostname}${port}`;
+            const res = await fetch(`${serverBase}/api/host-url`);
+            if (res.ok) {
+                const { appUrl } = await res.json();
+                if (appUrl) url = appUrl;
+            }
+        } catch (e) {
+            console.warn('Could not get LAN URL for QR, using current:', e);
+        }
         try {
             const qrCodeDataUrl = await QRCode.toDataURL(url, {
                 width: 256,
@@ -108,7 +134,6 @@ class PizzaSkyRaceApp {
                     light: '#FFFFFF'
                 }
             });
-            
             qrContainer.innerHTML = `<img src="${qrCodeDataUrl}" alt="QR Code" />`;
         } catch (error) {
             console.error('Failed to generate QR code:', error);
