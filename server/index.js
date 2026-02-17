@@ -52,8 +52,10 @@ class Race {
         this.isActive = true;
         this.winner = null;
         this.timerInterval = null;
+        this.timerStarted = false;
         
-        this.startTimer();
+        // Don't start timer until race actually begins
+        // this.startTimer();
     }
     
     addPlayer(playerId, socketId) {
@@ -220,6 +222,14 @@ io.on('connection', (socket) => {
             currentRace = new Race(gameState.currentRaceId);
             gameState.races.set(gameState.currentRaceId, currentRace);
             console.log(`Started new race: ${gameState.currentRaceId}`);
+        }
+        
+        // Start timer when race begins
+        if (!currentRace.timerStarted) {
+            currentRace.startTime = Date.now();
+            currentRace.endTime = currentRace.startTime + currentRace.duration;
+            currentRace.startTimer();
+            currentRace.timerStarted = true;
         }
         
         // Broadcast manual race start to all players in the race

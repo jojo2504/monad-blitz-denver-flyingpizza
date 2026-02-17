@@ -7,7 +7,7 @@ export class GameScene extends Phaser.Scene {
         this.platforms = null;
         this.score = 0;
         this.gameSpeed = 300;
-        this.jumpPower = -400;
+        this.jumpPower = -600;  // Increased for better gameplay
         this.isJumping = false;
         this.jumpsRemaining = 3;  // Start with 3 jumps
         this.hasPowerUp = false;
@@ -24,7 +24,10 @@ export class GameScene extends Phaser.Scene {
     }
     
     preload() {
-        // Create simple pizza-themed sprites
+        // Load pizza image from assets (Vite's publicDir copies to root of dist)
+        this.load.image('pizza', '/pizza.png');
+        
+        // Create other sprites
         this.createSprites();
     }
     
@@ -419,27 +422,9 @@ export class GameScene extends Phaser.Scene {
         platformGraphics.generateTexture('platform', 150, 30);
         platformGraphics.destroy();
         
-        // Pepperoni Pizza (good) - red circle with pepperoni
-        const pepperoniGraphics = this.add.graphics();
-        pepperoniGraphics.fillStyle(0xFF6347, 1);
-        pepperoniGraphics.fillCircle(16, 16, 16);
-        pepperoniGraphics.fillStyle(0xFF0000, 1);
-        pepperoniGraphics.fillCircle(12, 12, 4);
-        pepperoniGraphics.fillCircle(20, 12, 4);
-        pepperoniGraphics.fillCircle(16, 20, 4);
-        pepperoniGraphics.generateTexture('pepperoni', 32, 32);
-        pepperoniGraphics.destroy();
-        
-        // Pineapple Pizza (bad) - yellow with green
-        const ananasGraphics = this.add.graphics();
-        ananasGraphics.fillStyle(0xFFFF00, 1);
-        ananasGraphics.fillCircle(16, 16, 16);
-        ananasGraphics.fillStyle(0x00FF00, 1);
-        ananasGraphics.fillCircle(16, 10, 5);
-        ananasGraphics.lineStyle(3, 0xFF00FF, 1);
-        ananasGraphics.strokeCircle(16, 16, 16);
-        ananasGraphics.generateTexture('ananas', 32, 32);
-        ananasGraphics.destroy();
+        // Pizza images will use the loaded 'pizza' texture
+        // Good pizza (pepperoni) - normal pizza  
+        // Bad pizza (pineapple) - tinted yellow (no overlay needed)
     }
     
     createInitialGround() {
@@ -486,11 +471,17 @@ export class GameScene extends Phaser.Scene {
             // Make it harder: more pineapple over time
             const pineappleChance = Math.min(0.75, 0.45 + (this.score / 700));
             const isPepperoni = Math.random() > pineappleChance;
-            const texture = isPepperoni ? 'pepperoni' : 'ananas';
             
-            const powerUp = this.powerUps.create(x + (i * 80), y, texture);
+            // Use pizza texture for both, tint bad ones
+            const powerUp = this.powerUps.create(x + (i * 80), y, 'pizza');
+            powerUp.setScale(0.5);  // Make pizza smaller (50% size)
             powerUp.setData('type', isPepperoni ? 'boost' : 'glue');
             powerUp.setData('points', isPepperoni ? 6 : -12);
+            
+            // Tint bad pizza with yellow (no overlay)
+            if (!isPepperoni) {
+                powerUp.setTint(0xFFFF00);
+            }
             
             // Add floating animation
             this.tweens.add({

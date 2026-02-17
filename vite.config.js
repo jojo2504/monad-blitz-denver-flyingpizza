@@ -3,6 +3,7 @@ import { copyFileSync } from 'fs';
 import { resolve } from 'path';
 
 export default defineConfig({
+    publicDir: 'assets',
     server: {
         port: 3000,
         host: '0.0.0.0',
