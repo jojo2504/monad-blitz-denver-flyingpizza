@@ -1,0 +1,8 @@
+{
+  "solidity.compileUsingRemoteVersion": "v0.8.23+commit.f704f362",
+  "solidity.remappings": [
+    "@openzeppelin/=node_modules/@openzeppelin/"
+  ],
+  "solidity.packageDefaultDependenciesDirectory": "node_modules",
+  "solidity.packageDefaultDependenciesContractsDirectory": ""
+}

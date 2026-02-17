@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍕 Pizza Sky Race - Monad Blitz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow: hidden;
+        }
+        
+        #game-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 300px;
+        }
+        
+        #timer {
+            font-size: 48px;
+            font-weight: bold;
+            color: #FFD700;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        #height {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+        
+        #leaderboard {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .player-entry {
+            padding: 5px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+        
+        .btn {
+            background: #FFD700;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 5px;
+            transition: transform 0.1s;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        #login-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        #login-screen h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        #login-screen p {
+            font-size: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            max-width: 600px;
+        }
+        
+        #qr-code {
+            margin: 20px 0;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        #wallet-info {
+            font-size: 12px;
+            margin-top: 10px;
+            word-break: break-all;
+        }
+        
+        #status {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="login-screen">
+        <h1>🍕 Pizza Sky Race</h1>
+        <p>Scan the QR code or tap the button to join the race!</p>
+        <div id="qr-code"></div>
+        <button class="btn" id="join-btn">Join Race with Passkey</button>
+        <p style="font-size: 14px; margin-top: 20px;">⚡ Powered by Monad & ERC-4337</p>
+    </div>
+    
+    <div id="game-container" class="hidden">
+        <div id="ui-overlay">
+            <div id="timer">60</div>
+            <div id="height">Height: 0m</div>
+            <div id="wallet-info"></div>
+            <div id="status">Ready to race!</div>
+            <div id="leaderboard">
+                <h3>🏆 Leaderboard</h3>
+                <div id="leaderboard-list"></div>
+            </div>
+        </div>
+        
+        <div id="phaser-game"></div>
+        
+        <div id="controls">
+            <button class="btn" id="jump-btn">🍕 JUMP</button>
+        </div>
+    </div>
+    
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
