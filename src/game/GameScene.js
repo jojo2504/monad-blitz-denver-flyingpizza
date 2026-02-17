@@ -41,7 +41,7 @@ export class GameScene extends Phaser.Scene {
         // Create ground/platforms group
         this.platforms = this.physics.add.staticGroup();
         
-        // Create initial platforms
+        // Create 3 starting platforms for everyone
         this.createInitialGround();
         
         // Create player (pizza delivery guy) - fixed position on left side, higher up
@@ -208,9 +208,9 @@ export class GameScene extends Phaser.Scene {
             this.platformTimer = 0;
         }
         
-        // Spawn power-ups - less frequent, more punishing mix
+        // Spawn power-ups - more frequent
         this.powerUpTimer += delta;
-        const powerUpInterval = Math.max(900, 1500 - Math.floor(this.score * 0.8));
+        const powerUpInterval = Math.max(400, 800 - Math.floor(this.score * 0.8));  // Spawn much more frequently
         if (this.powerUpTimer > powerUpInterval) {
             this.spawnPowerUp();
             this.powerUpTimer = 0;
@@ -266,8 +266,8 @@ export class GameScene extends Phaser.Scene {
         this.gameStarted = true;
         this.raceStarted = true;  // Allow game to update
         
-        // Enable gravity now that race is starting
-        this.player.body.setGravityY(200); // Start with low gravity
+        // Enable full gravity immediately when race starts
+        this.player.body.setGravityY(900);
         
         if (this.waitingText) {
             this.waitingText.destroy();
@@ -428,14 +428,14 @@ export class GameScene extends Phaser.Scene {
     }
     
     createInitialGround() {
-        // Spawn several initial platforms for player to land on
-        for (let i = 0; i < 5; i++) {
-            const x = 200 + (i * 150);
-            const y = Phaser.Math.Between(350, 450);
+        // Create 3 adjacent platforms at the start
+        for (let i = 0; i < 3; i++) {
+            const x = 150 + (i * 150);  // Start closer to player position
+            const y = 400;  // Same height for all 3
             const platform = this.platforms.create(x, y, 'platform');
             platform.setScale(1).refreshBody();
         }
-        console.log('🏗️ Created initial platforms:', this.platforms.getChildren().length);
+        console.log('🏗️ Created 3 starting platforms');
     }
     
     spawnPlatform() {
@@ -507,16 +507,16 @@ export class GameScene extends Phaser.Scene {
         
         // Visual feedback based on type
         if (type === 'boost') {
-            // Pepperoni: small help (not too strong)
+            // Pepperoni: gives 2 jumps
             const previousJumps = this.jumpsRemaining;
-            this.jumpsRemaining = Math.min(this.jumpsRemaining + 1, 3);
-            console.log(`⬆️ Jump +1: ${previousJumps} -> ${this.jumpsRemaining}`);
+            this.jumpsRemaining = Math.min(this.jumpsRemaining + 2, 3);
+            console.log(`⬆️ Jump +2: ${previousJumps} -> ${this.jumpsRemaining}`);
 
             // Pepperoni Pizza - green glow
             player.setTint(0x00FF00);
             
             // Show jump restore popup
-            const jumpText = this.add.text(powerUp.x, powerUp.y, '+1 Jump!', {
+            const jumpText = this.add.text(powerUp.x, powerUp.y, '+2 Jumps!', {
                 fontSize: '24px',
                 fontStyle: 'bold',
                 color: '#00FF00'
@@ -536,20 +536,22 @@ export class GameScene extends Phaser.Scene {
             
             console.log('🍕 Pepperoni Pizza! +10 points, +2 jumps!');
         } else if (type === 'glue') {
-            // Pineapple Pizza (malus): drain jumps + heavy gravity for a short time
+            // Pineapple Pizza: gives only 1 jump + heavy gravity for a short time
             player.setTint(0xFF0000);
 
-            // Drain jumps
-            this.jumpsRemaining = 0;
+            // Give only 1 jump
+            const previousJumps = this.jumpsRemaining;
+            this.jumpsRemaining = Math.min(this.jumpsRemaining + 1, 3);
+            console.log(`⬆️ Jump +1: ${previousJumps} -> ${this.jumpsRemaining}`);
 
-            // Apply heavy debuff
+            // Apply subtle debuff (slightly increased gravity, slightly reduced jump)
             this.heavyDebuffEndTime = Date.now() + 2500;
-            this.jumpPower = -320;
+            this.jumpPower = -500;  // Still playable (normal is -600)
             if (this.player?.body) {
-                this.player.body.setGravityY(1700);
+                this.player.body.setGravityY(1100);  // Subtle increase (normal is 900)
             }
             
-            const jumpText = this.add.text(powerUp.x, powerUp.y, 'SLOWED! NO JUMPS!', {
+            const jumpText = this.add.text(powerUp.x, powerUp.y, '+1 Jump (Slightly Slowed)', {
                 fontSize: '24px',
                 fontStyle: 'bold',
                 color: '#FF4444'
