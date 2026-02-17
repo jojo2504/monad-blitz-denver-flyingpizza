@@ -259,8 +259,13 @@
             }
             
             async init() {
-                // Connect to server (backend is on port 3000)
-                this.socket = io('http://localhost:3000');
+                // Connect to server - use same origin in production, localhost:3000 in dev
+                const socketUrl = window.location.hostname === 'localhost' 
+                    ? 'http://localhost:3000' 
+                    : window.location.origin;
+                
+                console.log('🔌 Connecting to:', socketUrl);
+                this.socket = io(socketUrl);
                 this.setupSocketListeners();
                 this.setupUI();
             }
