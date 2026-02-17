@@ -9,7 +9,7 @@ export class GameScene extends Phaser.Scene {
         this.gameSpeed = 300;
         this.jumpPower = -400;
         this.isJumping = false;
-        this.canDoubleJump = false;
+        this.jumpsRemaining = 3;  // Start with 3 jumps
         this.hasPowerUp = false;
         this.powerUpEndTime = 0;
         this.platformTimer = 0;
@@ -18,6 +18,7 @@ export class GameScene extends Phaser.Scene {
         this.gameStarted = true;
         this.isDead = false;
         this.spectating = false;
+        this.gameStartTime = 0;
     }
     
     preload() {
@@ -35,14 +36,15 @@ export class GameScene extends Phaser.Scene {
         // Create ground/platforms group
         this.platforms = this.physics.add.staticGroup();
         
-        // Create initial ground
+        // Create initial platforms
         this.createInitialGround();
         
         // Create player (pizza delivery guy) - fixed position on left side, higher up
         this.player = this.physics.add.sprite(150, 300, 'player');
         this.player.setBounce(0);
         this.player.setCollideWorldBounds(false);
-        this.player.body.setGravityY(800); // Extra gravity for better jump feel
+        // Start with very low gravity for easier gameplay
+        this.player.body.setGravityY(200); // Very low gravity at start
         
         // Collisions
         this.physics.add.collider(this.player, this.platforms, () => {
@@ -76,6 +78,9 @@ export class GameScene extends Phaser.Scene {
             strokeThickness: 4
         }).setOrigin(0.5).setScrollFactor(0).setDepth(100);
         
+        // Track when game started for tutorial period (null until first jump)
+        this.gameStartTime = null;
+        
         console.log('🏁 Game started! Jump with SPACE to survive!');
     }
     
@@ -89,14 +94,38 @@ export class GameScene extends Phaser.Scene {
             return;
         }
         
-        // DISABLED: Check for game over (fell off screen)
-        // Commented out so player doesn't die for debugging
-        /*
+        // Tutorial period: easier gravity for first 5 seconds AFTER first jump
+        if (this.gameStartTime !== null) {
+            const elapsedTime = Date.now() - this.gameStartTime;
+            if (elapsedTime > 5000 && this.player.body.gravity.y === 200) {
+                // Transition to normal gravity after 5 seconds
+                this.player.body.setGravityY(500);  // Reduced from 800 to 500
+                console.log('⚡ Gravity increased! Tutorial period over.');
+                
+                // Show message to player
+                const gravityText = this.add.text(400, 200, 'Gravity Increased!', {
+                    fontSize: '32px',
+                    fontStyle: 'bold',
+                    color: '#FF9900',
+                    stroke: '#000000',
+                    strokeThickness: 4
+                }).setOrigin(0.5).setScrollFactor(0);
+                
+                this.tweens.add({
+                    targets: gravityText,
+                    alpha: 0,
+                    y: 150,
+                    duration: 2000,
+                    onComplete: () => gravityText.destroy()
+                });
+            }
+        }
+        
+        // Check for game over (fell off screen)
         if (this.player.y > 650) {
             this.die();
             return;
         }
-        */
         
         // Log player physics state every 60 frames (1 second at 60fps)
         if (!this._debugFrameCount) this._debugFrameCount = 0;
@@ -148,12 +177,12 @@ export class GameScene extends Phaser.Scene {
             }
         });
         
-        // Spawn new platforms - INCREASED FREQUENCY
-        this.platformTimer += delta;
-        if (this.platformTimer > 800) {  // Changed from 1500 to 800 (spawn faster)
-            this.spawnPlatform();
-            this.platformTimer = 0;
-        }
+        // Platform spawning disabled - only 5 initial platforms
+        // this.platformTimer += delta;
+        // if (this.platformTimer > 800) {
+        //     this.spawnPlatform();
+        //     this.platformTimer = 0;
+        // }
         
         // Spawn power-ups - INCREASED FREQUENCY
         this.powerUpTimer += delta;
@@ -165,9 +194,12 @@ export class GameScene extends Phaser.Scene {
         // Update jump counter UI
         const onGround = this.player.body.touching.down || this.player.body.blocked.down;
         if (onGround) {
-            this.jumpCounterText.setText('Jumps: 2 ✅');
+            this.jumpCounterText.setText('Jumps: 3 ✅');
             this.jumpCounterText.setColor('#00FF00');
-        } else if (this.canDoubleJump) {
+        } else if (this.jumpsRemaining === 2) {
+            this.jumpCounterText.setText('Jumps: 2 🟢');
+            this.jumpCounterText.setColor('#00FF00');
+        } else if (this.jumpsRemaining === 1) {
             this.jumpCounterText.setText('Jumps: 1 ⚠️');
             this.jumpCounterText.setColor('#FFFF00');
         } else {
@@ -234,31 +266,37 @@ export class GameScene extends Phaser.Scene {
             return;
         }
         
+        // Start timer on first jump
+        if (this.gameStartTime === null) {
+            this.gameStartTime = Date.now();
+            console.log('⏱️ Timer started on first jump!');
+        }
+        
         const onGround = this.player.body.touching.down || this.player.body.blocked.down;
         
-        console.log('🦘 Jump attempt - onGround:', onGround, 'canDouble:', this.canDoubleJump);
+        console.log('🦘 Jump attempt - onGround:', onGround, 'jumpsRemaining:', this.jumpsRemaining);
         
         if (onGround) {
-            // First jump
+            // Ground jump - reset to 3 jumps available
             this.player.setVelocityY(this.jumpPower);
             this.isJumping = true;
-            this.canDoubleJump = true;
-            console.log('✅ First jump! velocity:', this.jumpPower);
-        } else if (this.canDoubleJump) {
-            // Double jump
-            this.player.setVelocityY(this.jumpPower * 0.8);
-            this.canDoubleJump = false;
-            console.log('✅ Double jump!');
+            this.jumpsRemaining = 2;  // 2 more jumps left after first
+            console.log('✅ Ground jump! Jumps remaining:', this.jumpsRemaining);
+        } else if (this.jumpsRemaining > 0) {
+            // Air jump (2nd or 3rd jump)
+            this.player.setVelocityY(this.jumpPower * 0.85);
+            this.jumpsRemaining--;
+            console.log('✅ Air jump #' + (3 - this.jumpsRemaining) + '! Jumps remaining:', this.jumpsRemaining);
         } else {
-            console.log('❌ Cannot jump - not on ground and no double jump');
+            console.log('❌ Cannot jump - no jumps remaining');
         }
     }
     
     onLanding() {
         if (this.player && this.player.body && this.player.body.touching.down) {
-            console.log('🔽 LANDED on platform');
+            console.log('🔽 LANDED on platform - jumps reset to 3');
             this.isJumping = false;
-            this.canDoubleJump = false;
+            this.jumpsRemaining = 3;  // Reset to 3 jumps on landing
         }
     }
     
@@ -370,11 +408,14 @@ export class GameScene extends Phaser.Scene {
     }
     
     createInitialGround() {
-        // Create ground floor
-        for (let i = 0; i < 10; i++) {
-            const platform = this.platforms.create(i * 150, 550, 'platform');
+        // Spawn several initial platforms for player to land on
+        for (let i = 0; i < 5; i++) {
+            const x = 200 + (i * 150);
+            const y = Phaser.Math.Between(350, 450);
+            const platform = this.platforms.create(x, y, 'platform');
             platform.setScale(1).refreshBody();
         }
+        console.log('🏗️ Created initial platforms:', this.platforms.getChildren().length);
     }
     
     spawnPlatform() {
@@ -430,54 +471,61 @@ export class GameScene extends Phaser.Scene {
         // Add points to score
         this.score += points;
         
+        // ALL orbs give 2 jumps
+        const previousJumps = this.jumpsRemaining;
+        this.jumpsRemaining = Math.min(this.jumpsRemaining + 2, 3); // Add 2 jumps, max 3
+        
+        console.log(`⬆️ Jumps restored! ${previousJumps} -> ${this.jumpsRemaining}`);
+        
+        // Visual feedback based on type
         if (type === 'boost') {
-            // Pepperoni Pizza - Speed boost!
-            this.hasPowerUp = true;
-            this.gameSpeed = 450;
-            this.powerUpEndTime = Date.now() + 3000;
-            
-            // Visual feedback - green glow
+            // Pepperoni Pizza - green glow
             player.setTint(0x00FF00);
             
-            // Show score popup
-            const scoreText = this.add.text(powerUp.x, powerUp.y, '+10', {
+            // Show jump restore popup
+            const jumpText = this.add.text(powerUp.x, powerUp.y, '+2 Jumps!', {
                 fontSize: '24px',
                 fontStyle: 'bold',
                 color: '#00FF00'
             });
             this.tweens.add({
-                targets: scoreText,
-                y: scoreText.y - 50,
+                targets: jumpText,
+                y: jumpText.y - 50,
                 alpha: 0,
                 duration: 1000,
-                onComplete: () => scoreText.destroy()
+                onComplete: () => jumpText.destroy()
             });
             
-            console.log('🍕 Pepperoni Pizza! +10 points, Speed boost!');
-        } else if (type === 'glue') {
-            // Pineapple Pizza - Slow down!
-            this.hasPowerUp = true;
-            this.gameSpeed = 150;
-            this.powerUpEndTime = Date.now() + 3000;
+            // Clear tint after short delay
+            this.time.delayedCall(500, () => {
+                if (player.tintTopLeft) player.clearTint();
+            });
             
-            // Visual feedback - red tint
+            console.log('🍕 Pepperoni Pizza! +10 points, +2 jumps!');
+        } else if (type === 'glue') {
+            // Pineapple Pizza - red tint (still gives jumps but costs points)
             player.setTint(0xFF0000);
             
-            // Show score popup
-            const scoreText = this.add.text(powerUp.x, powerUp.y, '-5', {
+            // Show jump restore popup
+            const jumpText = this.add.text(powerUp.x, powerUp.y, '+2 Jumps!', {
                 fontSize: '24px',
                 fontStyle: 'bold',
-                color: '#FF0000'
+                color: '#FFFF00'
             });
             this.tweens.add({
-                targets: scoreText,
-                y: scoreText.y - 50,
+                targets: jumpText,
+                y: jumpText.y - 50,
                 alpha: 0,
                 duration: 1000,
-                onComplete: () => scoreText.destroy()
+                onComplete: () => jumpText.destroy()
             });
             
-            console.log('🍍 Pineapple Pizza! -5 points, Slowed down!');
+            // Clear tint after short delay
+            this.time.delayedCall(500, () => {
+                if (player.tintTopLeft) player.clearTint();
+            });
+            
+            console.log('🍍 Pineapple Pizza! -5 points, +2 jumps!');
         }
         
         powerUp.destroy();
