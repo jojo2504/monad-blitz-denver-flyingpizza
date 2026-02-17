@@ -31,6 +31,7 @@ export class GameScene extends Phaser.Scene {
     preload() {
         // Load pizza image from assets (Vite's publicDir copies to root of dist)
         this.load.image('pizza', '/pizza.png');
+        this.load.image('pineapple', '/pineapple-bg.png');
         
         // Create other sprites
         this.createSprites();
@@ -584,15 +585,11 @@ export class GameScene extends Phaser.Scene {
             const isPepperoni = Math.random() > pineappleChance;
             
             // Use pizza texture for both, tint bad ones
-            const powerUp = this.powerUps.create(x + (i * 80), y, 'pizza');
+            const texture = isPepperoni ? 'pizza' : 'pineapple';
+            const powerUp = this.powerUps.create(x + (i * 80), y, texture);
             powerUp.setScale(0.5);  // Make pizza smaller (50% size)
             powerUp.setData('type', isPepperoni ? 'boost' : 'glue');
             powerUp.setData('points', isPepperoni ? 6 : -12);
-            
-            // Tint bad pizza with yellow (no overlay)
-            if (!isPepperoni) {
-                powerUp.setTint(0xFFFF00);
-            }
             
             // Add floating animation
             this.tweens.add({
