@@ -119,9 +119,13 @@ class PizzaSkyRaceApp {
             this.updateTimer(this.timeRemaining);
         });
         
-        this.socket.on('timer', (data) => {
-            this.timeRemaining = data.timeRemaining;
-            this.updateTimer(this.timeRemaining);
+        // Multiplayer: receive other players' positions
+        this.socket.on('playersPositions', (data) => {
+            if (!this.game) return;
+            const scene = this.game.scene.getScene('GameScene');
+            if (scene && scene.updateOtherPlayers) {
+                scene.updateOtherPlayers(data.players);
+            }
         });
     }
     
@@ -243,6 +247,29 @@ class PizzaSkyRaceApp {
         this.heightUpdateInterval = setInterval(() => {
             this.sendHeightUpdate();
         }, 500);
+        
+        // Position broadcast throttle
+        this._lastPositionSend = 0;
+    }
+    
+    // Send player position for multiplayer ghost rendering
+    sendPlayerPosition(posData) {
+        if (!this.socket || !this.currentRaceId || !this.playerId) return;
+        
+        // Throttle: send at most every 100ms
+        const now = Date.now();
+        if (now - (this._lastPositionSend || 0) < 100) return;
+        this._lastPositionSend = now;
+        
+        this.socket.emit('playerPosition', {
+            raceId: this.currentRaceId,
+            playerId: this.playerId,
+            x: posData.x,
+            y: posData.y,
+            score: posData.score,
+            velocityY: posData.velocityY,
+            alive: posData.alive
+        });
     }
     
     jump() {

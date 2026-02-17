@@ -21,6 +21,11 @@ export class GameScene extends Phaser.Scene {
         this.isDead = false;
         this.spectating = false;
         this.gameStartTime = 0;
+        
+        // Multiplayer: other players' ghosts
+        this.otherPlayers = {};  // { playerId: { sprite, nameText, scoreText } }
+        this.ghostColors = [0xFF69B4, 0x00BFFF, 0x32CD32, 0xFFD700, 0xFF6347, 0x9370DB, 0x00CED1, 0xFF8C00];
+        this.ghostColorIndex = 0;
     }
     
     preload() {
@@ -95,6 +100,13 @@ export class GameScene extends Phaser.Scene {
             stroke: '#000000',
             strokeThickness: 4
         }).setOrigin(0.5).setScrollFactor(0).setDepth(100);
+        
+        // Create ghost player sprites texture
+        this.createGhostTextures();
+        
+        // Reset other players
+        this.otherPlayers = {};
+        this.ghostColorIndex = 0;
         
         // Track when game started for tutorial period (null until first jump)
         this.gameStartTime = null;
@@ -235,10 +247,18 @@ export class GameScene extends Phaser.Scene {
         // Update score (distance traveled)
         this.score += this.gameSpeed * (delta / 1000) * 0.1;
         
-        // Update app with current score
+        // Update app with current score + player position
         const app = this.registry.get('app');
         if (app) {
             app.updateHeight(Math.floor(this.score));
+            // Send position for multiplayer visibility
+            app.sendPlayerPosition({
+                x: this.player.x,
+                y: this.player.y,
+                score: Math.floor(this.score),
+                velocityY: this.player.body.velocity.y,
+                alive: !this.isDead
+            });
         }
         
         // Debuff expiration (pineapple)
@@ -387,6 +407,97 @@ export class GameScene extends Phaser.Scene {
     gameOver() {
         console.log('💀 Game Over! Score:', Math.floor(this.score));
         this.scene.restart();
+    }
+    
+    createGhostTextures() {
+        // Create ghost player textures for each color
+        this.ghostColors.forEach((color, i) => {
+            const key = `ghost_${i}`;
+            if (this.textures.exists(key)) return;
+            const g = this.add.graphics();
+            g.fillStyle(color, 0.6);
+            g.fillCircle(16, 16, 14);
+            g.fillStyle(0xFFFFFF, 0.8);
+            g.fillCircle(16, 12, 3);
+            g.lineStyle(2, 0x000000, 0.4);
+            g.strokeCircle(16, 16, 14);
+            g.generateTexture(key, 32, 32);
+            g.destroy();
+        });
+    }
+    
+    updateOtherPlayers(playersData) {
+        if (!playersData || !this.raceStarted) return;
+        
+        const app = this.registry.get('app');
+        const myId = app?.playerId;
+        
+        playersData.forEach(p => {
+            if (p.playerId === myId) return; // Skip self
+            
+            if (!this.otherPlayers[p.playerId]) {
+                // Create new ghost sprite
+                const colorIdx = this.ghostColorIndex % this.ghostColors.length;
+                this.ghostColorIndex++;
+                
+                const sprite = this.add.sprite(p.x || 150, p.y || 300, `ghost_${colorIdx}`);
+                sprite.setAlpha(0.5);
+                sprite.setDepth(50);
+                
+                const nameText = this.add.text(p.x || 150, (p.y || 300) - 24, p.playerId.slice(0, 6), {
+                    fontSize: '11px',
+                    fontStyle: 'bold',
+                    color: '#FFFFFF',
+                    stroke: '#000000',
+                    strokeThickness: 2
+                }).setOrigin(0.5).setDepth(51).setAlpha(0.7);
+                
+                const scoreText = this.add.text(p.x || 150, (p.y || 300) - 38, `${p.score || 0}`, {
+                    fontSize: '10px',
+                    fontStyle: 'bold',
+                    color: '#FACC15',
+                    stroke: '#000000',
+                    strokeThickness: 2
+                }).setOrigin(0.5).setDepth(51).setAlpha(0.7);
+                
+                this.otherPlayers[p.playerId] = { sprite, nameText, scoreText, colorIdx };
+                console.log(`👻 Ghost created for ${p.playerId.slice(0, 6)}`);
+            }
+            
+            const ghost = this.otherPlayers[p.playerId];
+            
+            if (!p.alive) {
+                // Dead player: show faded at bottom
+                ghost.sprite.setAlpha(0.2);
+                ghost.sprite.setPosition(p.x || 150, 560);
+                ghost.nameText.setPosition(p.x || 150, 536);
+                ghost.scoreText.setPosition(p.x || 150, 522);
+                ghost.nameText.setAlpha(0.3);
+                ghost.scoreText.setAlpha(0.3);
+                return;
+            }
+            
+            // Smoothly interpolate ghost position
+            const targetX = p.x || 150;
+            const targetY = p.y || 300;
+            ghost.sprite.x += (targetX - ghost.sprite.x) * 0.3;
+            ghost.sprite.y += (targetY - ghost.sprite.y) * 0.3;
+            ghost.nameText.setPosition(ghost.sprite.x, ghost.sprite.y - 24);
+            ghost.scoreText.setText(`${p.score || 0}`);
+            ghost.scoreText.setPosition(ghost.sprite.x, ghost.sprite.y - 38);
+        });
+        
+        // Remove ghosts for players no longer in the data
+        const activeIds = new Set(playersData.map(p => p.playerId));
+        Object.keys(this.otherPlayers).forEach(id => {
+            if (!activeIds.has(id)) {
+                const ghost = this.otherPlayers[id];
+                ghost.sprite.destroy();
+                ghost.nameText.destroy();
+                ghost.scoreText.destroy();
+                delete this.otherPlayers[id];
+            }
+        });
     }
     
     createClouds() {

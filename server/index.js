@@ -64,7 +64,13 @@ class Race {
             socketId,
             height: 0,
             lastUpdate: Date.now(),
-            powerUps: []
+            powerUps: [],
+            // Multiplayer position data
+            x: 150,
+            y: 300,
+            score: 0,
+            velocityY: 0,
+            alive: true
         });
     }
     
@@ -86,7 +92,37 @@ class Race {
         return leaderboard;
     }
     
+    updatePlayerPosition(playerId, posData) {
+        const player = this.players.get(playerId);
+        if (player) {
+            player.x = posData.x;
+            player.y = posData.y;
+            player.score = posData.score;
+            player.velocityY = posData.velocityY;
+            player.alive = posData.alive;
+        }
+    }
+    
+    getAllPlayerPositions() {
+        return Array.from(this.players.values()).map(p => ({
+            playerId: p.playerId,
+            x: p.x,
+            y: p.y,
+            score: p.score,
+            velocityY: p.velocityY,
+            alive: p.alive
+        }));
+    }
+    
     startTimer() {
+        // Position broadcast: 10 times per second for smooth ghost movement
+        this.positionInterval = setInterval(() => {
+            if (this.isActive) {
+                const positions = this.getAllPlayerPositions();
+                io.to(`race-${this.raceId}`).emit('playersPositions', { players: positions });
+            }
+        }, 100);
+        
         this.timerInterval = setInterval(() => {
             const timeElapsed = Date.now() - this.startTime;
             const timeRemaining = Math.max(0, Math.ceil((this.duration - timeElapsed) / 1000));
@@ -104,6 +140,7 @@ class Race {
     endRace() {
         this.isActive = false;
         clearInterval(this.timerInterval);
+        if (this.positionInterval) clearInterval(this.positionInterval);
         
         const leaderboard = this.getLeaderboard();
         this.winner = leaderboard[0]?.playerId || null;
@@ -193,6 +230,28 @@ io.on('connection', (socket) => {
                 height,
                 leaderboard
             });
+        }
+    });
+    
+    // Player position updates for multiplayer ghosts
+    socket.on('playerPosition', (data) => {
+        const { raceId, playerId, x, y, score, velocityY, alive } = data;
+        const race = gameState.races.get(raceId);
+        if (race && race.isActive) {
+            race.updatePlayerPosition(playerId, { x, y, score, velocityY, alive });
+        }
+    });
+    
+    // Player died
+    socket.on('playerDied', (data) => {
+        const { raceId, playerId, finalScore } = data;
+        const race = gameState.races.get(raceId);
+        if (race) {
+            const player = race.players.get(playerId);
+            if (player) {
+                player.alive = false;
+                player.height = finalScore;
+            }
         }
     });
     
