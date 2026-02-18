@@ -13,6 +13,7 @@ export class GameScene extends Phaser.Scene {
         this.hasPowerUp = false;
         this.powerUpEndTime = 0;
         this.heavyDebuffEndTime = 0;
+        this.slowdownStacks = 0;
         this.platformTimer = 0;
         this.powerUpTimer = 0;
         this.clouds = [];
@@ -207,9 +208,8 @@ export class GameScene extends Phaser.Scene {
             this.powerUpTimer = 0;
         }
 
-        // Jump counter UI
-        const onGround = this.player.body.touching.down || this.player.body.blocked.down;
-        if (onGround) {
+        // Jump counter UI - always show actual jumpsRemaining value
+        if (this.jumpsRemaining === 3) {
             this.jumpCounterText.setText('Jumps: 3 ✅');
             this.jumpCounterText.setColor('#00FF00');
         } else if (this.jumpsRemaining === 2) {
@@ -238,19 +238,12 @@ export class GameScene extends Phaser.Scene {
             });
         }
 
-        // Debuff expiration
-        if (this.heavyDebuffEndTime && Date.now() > this.heavyDebuffEndTime) {
-            this.heavyDebuffEndTime = 0;
-            this.jumpPower = -400;
-            if (this.player?.body?.gravity?.y < 900) this.player.body.setGravityY(900);
-            if (this.player.tintTopLeft) this.player.clearTint();
-        }
-
-        // Gradually increase difficulty
+        // Gradually increase difficulty (respects cumulative slowdown)
         if (this.raceStarted && this.score > 50) {
             this.gameSpeed = Math.min(620, 300 + (this.score / 4.5));
-            const targetGravity = Math.min(1500, 900 + (this.score * 2.2));
-            if (this.player?.body?.gravity?.y < targetGravity && Date.now() > this.heavyDebuffEndTime) {
+            const baseGravity = 900 + (this.slowdownStacks * 100);
+            const targetGravity = Math.min(1500, baseGravity + (this.score * 2.2));
+            if (this.player?.body?.gravity?.y < targetGravity) {
                 this.player.body.setGravityY(targetGravity);
             }
         }
@@ -294,13 +287,16 @@ export class GameScene extends Phaser.Scene {
         if (!this.player || !this.player.body) return;
 
         const onGround = this.player.body.touching.down || this.player.body.blocked.down;
+        
+        // Apply cumulative slowdown: each stack reduces jump power by 50
+        const effectiveJumpPower = this.jumpPower + (this.slowdownStacks * 50);
 
         if (onGround) {
-            this.player.setVelocityY(this.jumpPower);
+            this.player.setVelocityY(effectiveJumpPower);
             this.isJumping = true;
             this.jumpsRemaining = 2;
         } else if (this.jumpsRemaining > 0) {
-            this.player.setVelocityY(this.jumpPower * 0.85);
+            this.player.setVelocityY(effectiveJumpPower * 0.85);
             this.jumpsRemaining--;
         }
     }
@@ -348,6 +344,11 @@ export class GameScene extends Phaser.Scene {
         this.spectating = true;
 
         if (app && app.socket) {
+            console.log('📡 Emitting playerDied event:', {
+                raceId: app.currentRaceId,
+                playerId: app.playerId,
+                finalScore: Math.floor(this.score)
+            });
             app.socket.emit('playerDied', {
                 raceId: app.currentRaceId,
                 playerId: app.playerId,
@@ -504,7 +505,8 @@ export class GameScene extends Phaser.Scene {
 
         for (let i = 0; i < numPowerUps; i++) {
             const y = Phaser.Math.Between(200, 450);
-            const pineappleChance = Math.min(0.75, 0.45 + (this.score / 700));
+            // 5 pizzas for every 1 pineapple (16.67% chance of pineapple)
+            const pineappleChance = 0.1667;
             const isPepperoni = Math.random() > pineappleChance;
             const texture = isPepperoni ? 'pizza' : 'pineapple';
             const powerUp = this.powerUps.create(x + (i * 80), y, texture);
@@ -550,16 +552,19 @@ export class GameScene extends Phaser.Scene {
             });
 
         } else if (type === 'glue') {
-            player.setTint(0xFF0000);
+            // Cumulative slowdown: each bad pizza permanently increases slowdown
+            this.slowdownStacks++;
             this.jumpsRemaining = Math.min(this.jumpsRemaining + 1, 3);
-            this.heavyDebuffEndTime = Date.now() + 2500;
-            this.jumpPower = -500;
-            if (this.player?.body) this.player.body.setGravityY(1100);
+            
+            // Each stack increases gravity by 100
+            const newGravity = 900 + (this.slowdownStacks * 100);
+            if (this.player?.body) this.player.body.setGravityY(newGravity);
 
             const jumpText = this.add.text(powerUp.x, powerUp.y, '+1 Jump (Slowed)', {
                 fontSize: '24px',
                 fontStyle: 'bold',
-                color: '#FF4444'
+                color: '#FF4444',
+                align: 'center'
             });
             this.tweens.add({
                 targets: jumpText,
@@ -567,10 +572,6 @@ export class GameScene extends Phaser.Scene {
                 alpha: 0,
                 duration: 1000,
                 onComplete: () => jumpText.destroy()
-            });
-
-            this.time.delayedCall(500, () => {
-                if (player.tintTopLeft) player.clearTint();
             });
         }
 

@@ -359,12 +359,12 @@ class PizzaSkyRaceApp {
         const leaderboardPanel = document.getElementById('leaderboard-panel');
         if (leaderboardPanel) {
             leaderboardPanel.style.opacity = '0';
-            leaderboardPanel.style.transform = 'translateY(20px)';
+            leaderboardPanel.style.transform = 'translate(-50%, -50%) translateY(20px)';
             leaderboardPanel.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
             leaderboardPanel.style.display = 'block';
             setTimeout(() => {
                 leaderboardPanel.style.opacity = '1';
-                leaderboardPanel.style.transform = 'translateY(0)';
+                leaderboardPanel.style.transform = 'translate(-50%, -50%) translateY(0)';
             }, 0);
         }
 

@@ -257,6 +257,16 @@ io.on('connection', (socket) => {
             if (player) {
                 player.alive = false;
                 player.height = finalScore;
+                
+                // Check if all players are dead
+                const alivePlayers = Array.from(race.players.values()).filter(p => p.alive);
+                console.log(`Player ${playerId} died. Alive players: ${alivePlayers.length}/${race.players.size}`);
+                
+                if (alivePlayers.length === 0 && race.isActive) {
+                    console.log(`🏁 All players dead in race ${raceId}, ending race in 2 seconds`);
+                    // Set the race to end in 2 seconds
+                    race.startTime = Date.now() - race.duration + 2000;
+                }
             }
         }
     });
