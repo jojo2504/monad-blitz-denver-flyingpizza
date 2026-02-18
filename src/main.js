@@ -84,12 +84,12 @@ class PizzaSkyRaceApp {
 
         this.socket.on('joinedRace', (data) => {
             if (!this.currentRaceId) this.currentRaceId = data.raceId;
-            this.updateStatus(`En attente du départ... (${data.playerCount} joueurs)`);
+            this.updateStatus(`Waiting for start... (${data.playerCount} players)`);
         });
 
         this.socket.on('playerJoined', (data) => {
             console.log('Player joined:', data);
-            this.updateStatus(`${data.playerCount} joueurs dans la course`);
+            this.updateStatus(`${data.playerCount} players in the race`);
         });
 
         this.socket.on('heightUpdate', (data) => {
@@ -175,11 +175,11 @@ class PizzaSkyRaceApp {
             this.pseudo = (rawPseudo && rawPseudo.length > 0) ? rawPseudo : 'Player';
 
             if (this.pseudo.length > 16) {
-                this.updateStatus('❌ Pseudo trop long (max 16 caractères)');
+                this.updateStatus('❌ Name too long (max 16 characters)');
                 return;
             }
 
-            this.updateStatus('Création du compte...');
+            this.updateStatus('Creating account...');
 
             if (!this.socket) {
                 const wsUrl = window.location.hostname === 'localhost'
@@ -195,10 +195,10 @@ class PizzaSkyRaceApp {
             const account = await this.walletManager.createSmartAccount();
             this.playerId = account.address;
 
-            this.updateStatus('Création de la clé de session...');
+            this.updateStatus('Creating session key...');
             await this.walletManager.createSessionKey(90);
 
-            this.updateStatus('Rejoindre la course...');
+            this.updateStatus('Joining the race...');
 
             // Send pseudo alongside player ID so server and other clients know the name
             this.socket.emit('joinRace', {
@@ -219,13 +219,13 @@ class PizzaSkyRaceApp {
 
         } catch (error) {
             console.error('Failed to join race:', error);
-            this.updateStatus('❌ Échec de la connexion. Réessayez.');
+            this.updateStatus('❌ Connection failed. Try again.');
         }
     }
 
     startGame() {
         this.raceActive = true;
-        this.updateStatus('🏁 La course commence ! GO!');
+        this.updateStatus('🏁 Race starts! GO!');
 
         // Show ONLY the timer during the race
         const timerWrapper = document.getElementById('timer-wrapper');
@@ -310,7 +310,8 @@ class PizzaSkyRaceApp {
             const div = document.createElement('div');
             div.className = 'player-entry';
             const isMe = entry.playerId === this.playerId;
-            const displayName = entry.pseudo || entry.playerId.slice(0, 6);
+            // Show pseudo, fallback to wallet address if no pseudo
+            const displayName = entry.pseudo || `${entry.playerId.slice(0, 6)}...${entry.playerId.slice(-4)}`;
             div.innerHTML = `
                 ${index + 1}. ${isMe ? '👤 ' : '🍕 '}
                 <strong>${displayName}</strong>
@@ -338,14 +339,14 @@ class PizzaSkyRaceApp {
         const winnerName = data.winnerPseudo || data.winner?.slice(0, 6) || '???';
 
         if (isWinner) {
-            this.updateStatus('🎉 TU AS GAGNÉ ! Golden Slice NFT en cours de mint...');
+            this.updateStatus('🎉 YOU WON! Minting Golden Slice NFT...');
             try {
                 await this.walletManager.mintGoldenSlice(this.currentRaceId, this.currentHeight);
             } catch (error) {
                 console.error('Failed to mint NFT:', error);
             }
         } else {
-            this.updateStatus(`Course terminée ! Gagnant : ${winnerName}`);
+            this.updateStatus(`Race over! Winner: ${winnerName}`);
         }
 
         // Hide timer
@@ -371,7 +372,7 @@ class PizzaSkyRaceApp {
         const heightDisplay = document.getElementById('height');
         if (heightDisplay) {
             heightDisplay.style.display = 'block';
-            heightDisplay.textContent = `Votre score : ${Math.floor(this.currentHeight)}`;
+            heightDisplay.textContent = `Your Score: ${Math.floor(this.currentHeight)}`;
         }
 
         // Populate final leaderboard
@@ -379,8 +380,8 @@ class PizzaSkyRaceApp {
 
         // Offer replay
         setTimeout(() => {
-            if (confirm('Course terminée ! Rejouer ?')) {
-                window.location.reload();Ò
+            if (confirm('Race over! Play again?')) {
+                window.location.reload();
             }
         }, 5000);
     }

@@ -16,68 +16,79 @@ export class GameScene extends Phaser.Scene {
         this.platformTimer = 0;
         this.powerUpTimer = 0;
         this.clouds = [];
+        this.gameStarted = false;  // Wait for admin to start
+        this.raceStarted = false;  // Race hasn't started yet
+        this.isDead = false;
+        this.spectating = false;
+        this.gameStartTime = 0;
+        
+        // Multiplayer: other players' ghosts
+        this.otherPlayers = {};  // { playerId: { sprite, nameText, scoreText } }
+        this.ghostColors = [0xFF69B4, 0x00BFFF, 0x32CD32, 0xFFD700, 0xFF6347, 0x9370DB, 0x00CED1, 0xFF8C00];
+        this.ghostColorIndex = 0;
+    }
+    
+    preload() {
+        // Load pizza image from assets (Vite's publicDir copies to root of dist)
+        this.load.image('pizza', '/pizza.png');
+        this.load.image('pineapple', '/pineapple-bg.png');
+        this.load.image('chef', '/chef.png');
+    }
+    
+    create() {
+        // Create sprites AFTER images are loaded
+        this.createSprites();
+        
+        // Sky background
+        this.cameras.main.setBackgroundColor('#87CEEB');
+        
+        // Add moving clouds for sky effect
+        this.createClouds();
+        
+        // Create ground/platforms group
+        this.platforms = this.physics.add.staticGroup();
+        
+        // Create player (pizza delivery guy) - fixed position on left side, higher up
+        this.player = this.physics.add.sprite(150, 300, 'chef');
+        this.player.setScale(0.25); // Adjust size for the pixel art chef
+        this.player.setBounce(0);
+        this.player.setCollideWorldBounds(false);
+        // No gravity until race starts
+        this.player.body.setGravityY(0);
+        this.player.body.setVelocityX(0);
+        this.player.body.setVelocityY(0);
+        
+        // Collisions
+        this.physics.add.collider(this.player, this.platforms, () => {
+            this.onLanding();
+        }, null, this);
+        
+        // Input - Space, Up Arrow, or Touch to jump
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        
+        // Touch/Click input
+        this.input.on('pointerdown', () => {
+            console.log('👆 CLICK/TAP DETECTED - Attempting jump');
+            this.jump();
+        });
+        
+        // Power-ups group
+        this.powerUps = this.physics.add.group();
+        this.physics.add.overlap(this.player, this.powerUps, this.collectPowerUp, null, this);
+        
+        // Don't start game automatically - wait for admin
         this.gameStarted = false;
         this.raceStarted = false;
         this.isDead = false;
         this.spectating = false;
         this.gameStartTime = null;  // Set at startRace()
 
-        // Multiplayer: other players' ghosts
-        this.otherPlayers = {};
-        this.ghostColors = [0xFF69B4, 0x00BFFF, 0x32CD32, 0xFFD700, 0xFF6347, 0x9370DB, 0x00CED1, 0xFF8C00];
-        this.ghostColorIndex = 0;
-    }
-
-    preload() {
-        this.load.image('pizza', '/pizza.png');
-        this.load.image('pineapple', '/pineapple-bg.png');
-        this.createSprites();
-    }
-
-    create() {
-        this.cameras.main.setBackgroundColor('#87CEEB');
-        this.createClouds();
-
-        this.platforms = this.physics.add.staticGroup();
-
-        // NO initial ground — platforms spawn dynamically from the right
-
-        // Create player — floats in place until race starts
-        this.player = this.physics.add.sprite(150, 300, 'player');
-        this.player.setBounce(0);
-        this.player.setCollideWorldBounds(false);
-        this.player.body.setGravityY(0);
-        this.player.body.setVelocityX(0);
-        this.player.body.setVelocityY(0);
-
-        // Collisions
-        this.physics.add.collider(this.player, this.platforms, () => {
-            this.onLanding();
-        }, null, this);
-
-        // Keyboard input
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
-        // Touch/Click input
-        this.input.on('pointerdown', () => {
-            this.jump();
-        });
-
-        // Power-ups group
-        this.powerUps = this.physics.add.group();
-        this.physics.add.overlap(this.player, this.powerUps, this.collectPowerUp, null, this);
-
-        this.gameStarted = false;
-        this.raceStarted = false;
-        this.isDead = false;
-        this.spectating = false;
-
         // Show waiting message with pseudo
         const app = this.registry.get('app');
         const pseudo = app?.pseudo || 'Player';
 
-        this.waitingText = this.add.text(400, 280, `Prêt, ${pseudo} !`, {
+        this.waitingText = this.add.text(400, 280, `Ready, ${pseudo}!`, {
             fontSize: '36px',
             fontStyle: 'bold',
             color: '#FFFF00',
@@ -85,7 +96,7 @@ export class GameScene extends Phaser.Scene {
             strokeThickness: 4
         }).setOrigin(0.5).setScrollFactor(0).setDepth(100);
 
-        this.waitingSubText = this.add.text(400, 330, 'En attente du départ...', {
+        this.waitingSubText = this.add.text(400, 330, 'Waiting for race to start...', {
             fontSize: '24px',
             color: '#FFFFFF',
             stroke: '#000000',
@@ -101,8 +112,10 @@ export class GameScene extends Phaser.Scene {
             strokeThickness: 4
         }).setOrigin(0.5).setScrollFactor(0).setDepth(100);
 
+        // Multiplayer: other players' ghosts
         this.createGhostTextures();
         this.otherPlayers = {};
+        this.ghostColors = [0xFF69B4, 0x00BFFF, 0x32CD32, 0xFFD700, 0xFF6347, 0x9370DB, 0x00CED1, 0xFF8C00];
         this.ghostColorIndex = 0;
 
         console.log('🏁 Game scene created — waiting for race start');
@@ -309,7 +322,7 @@ export class GameScene extends Phaser.Scene {
         const app = this.registry.get('app');
         const pseudo = app?.pseudo || 'Player';
 
-        const deathText = this.add.text(400, 250, `${pseudo} est tombé !`, {
+        const deathText = this.add.text(400, 250, `${pseudo} fell!`, {
             fontSize: '48px',
             fontStyle: 'bold',
             color: '#FF0000',
@@ -317,7 +330,7 @@ export class GameScene extends Phaser.Scene {
             strokeThickness: 6
         }).setOrigin(0.5);
 
-        const scoreText = this.add.text(400, 320, `Score final : ${Math.floor(this.score)}`, {
+        const scoreText = this.add.text(400, 320, `Final Score: ${Math.floor(this.score)}`, {
             fontSize: '32px',
             fontStyle: 'bold',
             color: '#FFFFFF',
@@ -325,7 +338,7 @@ export class GameScene extends Phaser.Scene {
             strokeThickness: 4
         }).setOrigin(0.5);
 
-        this.add.text(400, 380, 'Spectateur du meilleur joueur...', {
+        this.add.text(400, 380, 'Spectating best player...', {
             fontSize: '24px',
             color: '#FFFF00',
             stroke: '#000000',
@@ -447,19 +460,21 @@ export class GameScene extends Phaser.Scene {
     }
 
     createSprites() {
-        const playerGraphics = this.add.graphics();
-        playerGraphics.fillStyle(0xFF6347, 1);
-        playerGraphics.fillCircle(16, 16, 16);
-        playerGraphics.fillStyle(0xFFFFFF, 1);
-        playerGraphics.fillCircle(16, 12, 4);
-        playerGraphics.generateTexture('player', 32, 32);
-        playerGraphics.destroy();
-
+        // Create fallback player texture if chef image didn't load
+        if (!this.textures.exists('chef')) {
+            const playerGraphics = this.add.graphics();
+            playerGraphics.fillStyle(0xFF6347, 1);
+            playerGraphics.fillCircle(32, 32, 32);
+            playerGraphics.fillStyle(0xFFFFFF, 1);
+            playerGraphics.fillCircle(32, 24, 8);
+            playerGraphics.generateTexture('chef', 64, 64);
+            playerGraphics.destroy();
+        }
+        
+        // Platform (cloud/pizza box) - invisible platform
         const platformGraphics = this.add.graphics();
-        platformGraphics.fillStyle(0xFFFFFF, 1);
+        platformGraphics.fillStyle(0xFFFFFF, 0); // Alpha = 0 pour invisible
         platformGraphics.fillRoundedRect(0, 0, 150, 30, 15);
-        platformGraphics.lineStyle(2, 0xCCCCCC, 1);
-        platformGraphics.strokeRoundedRect(0, 0, 150, 30, 15);
         platformGraphics.generateTexture('platform', 150, 30);
         platformGraphics.destroy();
     }
@@ -493,7 +508,7 @@ export class GameScene extends Phaser.Scene {
             const isPepperoni = Math.random() > pineappleChance;
             const texture = isPepperoni ? 'pizza' : 'pineapple';
             const powerUp = this.powerUps.create(x + (i * 80), y, texture);
-            powerUp.setScale(0.5);
+            powerUp.setScale(0.3);  // Make pizza smaller (30% size)
             powerUp.setData('type', isPepperoni ? 'boost' : 'glue');
             powerUp.setData('points', isPepperoni ? 6 : -12);
 
@@ -541,7 +556,7 @@ export class GameScene extends Phaser.Scene {
             this.jumpPower = -500;
             if (this.player?.body) this.player.body.setGravityY(1100);
 
-            const jumpText = this.add.text(powerUp.x, powerUp.y, '+1 Jump (Ralenti)', {
+            const jumpText = this.add.text(powerUp.x, powerUp.y, '+1 Jump (Slowed)', {
                 fontSize: '24px',
                 fontStyle: 'bold',
                 color: '#FF4444'

@@ -58,10 +58,11 @@ class Race {
         // this.startTimer();
     }
     
-    addPlayer(playerId, socketId) {
+    addPlayer(playerId, socketId, pseudo) {
         this.players.set(playerId, {
             playerId,
             socketId,
+            pseudo: pseudo || '',
             height: 0,
             lastUpdate: Date.now(),
             powerUps: [],
@@ -87,6 +88,7 @@ class Race {
             .sort((a, b) => b.height - a.height)
             .map(player => ({
                 playerId: player.playerId,
+                pseudo: player.pseudo || '',
                 height: player.height
             }));
         return leaderboard;
@@ -106,6 +108,7 @@ class Race {
     getAllPlayerPositions() {
         return Array.from(this.players.values()).map(p => ({
             playerId: p.playerId,
+            pseudo: p.pseudo || '',
             x: p.x,
             y: p.y,
             score: p.score,
@@ -144,11 +147,13 @@ class Race {
         
         const leaderboard = this.getLeaderboard();
         this.winner = leaderboard[0]?.playerId || null;
+        const winnerPseudo = leaderboard[0]?.pseudo || '';
         
         // Broadcast race end
         io.to(`race-${this.raceId}`).emit('raceEnded', {
             raceId: this.raceId,
             winner: this.winner,
+            winnerPseudo: winnerPseudo,
             finalLeaderboard: leaderboard
         });
         
@@ -162,7 +167,7 @@ io.on('connection', (socket) => {
     
     // Join Race
     socket.on('joinRace', (data) => {
-        const { playerId, address } = data;
+        const { playerId, address, pseudo } = data;
         
         // Get or create current race
         let currentRace = gameState.races.get(gameState.currentRaceId);
@@ -183,10 +188,11 @@ io.on('connection', (socket) => {
         }
         
         // Add player to race
-        currentRace.addPlayer(playerId, socket.id);
+        currentRace.addPlayer(playerId, socket.id, pseudo);
         gameState.players.set(socket.id, {
             playerId,
             address,
+            pseudo: pseudo || '',  // Store the pseudo
             raceId: currentRace.raceId
         });
         

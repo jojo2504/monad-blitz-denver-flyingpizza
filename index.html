@@ -369,20 +369,20 @@
         /*    Starts hidden — shown by main.js endGame()             */
         #leaderboard-panel {
             display: none; /* shown by JS when race ends */
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.82);
+            background: rgba(0,0,0,0.9);
             backdrop-filter: blur(12px);
             border-radius: 24px;
-            padding: 28px 32px;
-            z-index: 30;
-            min-width: 300px;
-            max-width: 420px;
+            padding: 32px 40px;
+            z-index: 1000;
+            min-width: 380px;
+            max-width: 500px;
             width: 90%;
-            border: 2px solid rgba(255,255,255,0.2);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            border: 3px solid rgba(255,215,0,0.4);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
         }
         #leaderboard-panel h3 {
             font-size: 20px;
@@ -526,7 +526,7 @@
 
         <!-- ✅ Pseudo input — ID referenced by main.js joinRace() -->
         <div id="pseudo-section">
-            <label for="pseudo-input">✏️ Ton pseudo</label>
+            <label for="pseudo-input">✏️ Your Nickname</label>
             <input
                 id="pseudo-input"
                 type="text"
@@ -535,7 +535,7 @@
                 autocomplete="off"
                 spellcheck="false"
             />
-            <div id="pseudo-hint">Max 16 caractères</div>
+            <div id="pseudo-hint">Max 16 characters</div>
         </div>
 
         <!-- Join Button — ID referenced by main.js setupUI() -->
@@ -562,7 +562,7 @@
         <!-- ✅ TIMER WRAPPER — hidden until startGame(), shown during race only
              ID referenced: main.js startGame() + endGame() -->
         <div id="timer-wrapper">
-            <div class="timer-label">Temps restant</div>
+            <div class="timer-label">Time Remaining</div>
             <!-- ✅ ID "timer" — referenced by main.js updateTimer() -->
             <div id="timer">60</div>
         </div>
@@ -579,7 +579,7 @@
         <!-- ✅ LEADERBOARD PANEL — hidden during race, revealed at endGame()
              IDs referenced: main.js setupUI(), startGame(), endGame(), updateLeaderboard() -->
         <div id="leaderboard-panel">
-            <h3>🏆 Classement final</h3>
+            <h3>🏆 Final Leaderboard</h3>
             <!-- ✅ ID "height" — referenced by main.js setupUI() + endGame() -->
             <div id="height"></div>
             <!-- ✅ ID "leaderboard-list" — referenced by main.js updateLeaderboard() -->
