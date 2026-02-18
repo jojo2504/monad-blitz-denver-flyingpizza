@@ -474,7 +474,7 @@ export class GameScene extends Phaser.Scene {
         
         // Platform (cloud/pizza box) - invisible platform
         const platformGraphics = this.add.graphics();
-        platformGraphics.fillStyle(0xFFFFFF, 0); // Alpha = 0 pour invisible
+        platformGraphics.fillStyle(0xFFFFFF, 0); // Alpha = 0 for invisible
         platformGraphics.fillRoundedRect(0, 0, 150, 30, 15);
         platformGraphics.generateTexture('platform', 150, 30);
         platformGraphics.destroy();
